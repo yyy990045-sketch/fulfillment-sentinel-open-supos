@@ -386,3 +386,130 @@
 .evidence-section + .evidence-section { margin-top: .95rem; padding-top: .95rem; border-top: 1px solid var(--rule); }
 .evidence-link { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: .75rem; padding: .2rem 0; line-height: 1.35; }
 .evidence-link:hover { color: var(--primary); }
+
+/* Visible case workflow: facts, decision and readback share one case context. */
+.eyebrow { display: block; font-size: 11px; font-weight: 500; line-height: 1.5; letter-spacing: .06em; color: var(--muted-foreground); }
+.source-caption { font-size: 11px; line-height: 1.5; color: var(--muted-foreground); white-space: nowrap; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.section-heading h2, .section-heading h3 { font-size: 14px; font-weight: 600; }
+.section-heading button { display: inline-flex; align-items: center; gap: 6px; color: var(--primary); font-size: 12px; }
+.workflow-workbench { padding-top: 20px; padding-bottom: 12px; }
+.case-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.case-conclusion { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 23px 0 22px; }
+.case-headline { font-size: 28px; line-height: 1.3; font-weight: 550; margin-top: 5px; letter-spacing: -.025em; }
+.risk-quantity { display: flex; align-items: center; gap: 18px; padding-right: 12px; color: var(--primary); }
+.risk-quantity strong { font-size: 64px; line-height: 1; font-weight: 500; letter-spacing: -.05em; }
+.risk-quantity small { font-size: 16px; margin-left: 8px; font-weight: 400; }
+.sync-message { padding: 10px 14px; background: var(--risk-soft); color: var(--risk); font-size: 12px; margin-bottom: 12px; }
+.case-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 32px; border-top: 1px solid var(--rule); padding-top: 18px; }
+.case-investigation { min-width: 0; }
+.workflow-workbench .work-scene, .review-mode .workflow-workbench .work-scene { height: 290px; margin-top: 6px; }
+.workflow-workbench .scene-object-label { min-width: 128px; }
+.source-object-name { display: block; font-size: 13px; color: var(--muted-foreground); }
+.source-object-name small { margin-left: 4px; font-size: 11px; }
+.source-object-quantity { display: block; margin-top: 8px; font-size: 48px; line-height: 1; font-weight: 500; letter-spacing: -.04em; }
+.source-object-quantity small { margin-left: 5px; font-size: 12px; font-weight: 400; color: var(--muted-foreground); }
+.quantity-link-label { position: absolute; transform: translateX(-50%); font-size: 12px; padding: 3px 10px; background: var(--background); border-radius: 4px; color: var(--primary); }
+.visible-evidence { border-top: 1px solid var(--rule); padding: 15px 0 0; }
+.visible-evidence ol { display: grid; grid-template-columns: 1fr 1.15fr 1.35fr .9fr; gap: 16px; margin-top: 13px; }
+.visible-evidence ol button { display: flex; flex-direction: column; gap: 5px; width: 100%; text-align: left; }
+.risk-quantity.text-risk { color: var(--risk); }
+.visible-evidence strong { font-size: 16px; font-weight: 550; }
+.visible-evidence li button > span:last-child { color: var(--muted-foreground); line-height: 1.6; }
+.decision-dock { padding: 0 0 0 28px; border-left: 1px solid var(--rule); min-width: 0; }
+.decision-title { font-size: 22px; font-weight: 500; line-height: 1.5; margin-top: 7px; }
+.plan-quantity { display: flex; align-items: baseline; gap: 12px; padding: 14px 0 12px; }
+.plan-quantity > span { font-size: 11px; color: var(--muted-foreground); }
+.plan-quantity strong { font-size: 35px; font-weight: 500; color: var(--primary); line-height: 1.2; }
+.plan-quantity small { font-size: 13px; font-weight: 400; margin-left: 4px; }
+.primary-case-action { width: 100%; justify-content: space-between; height: 44px; border-radius: 7px; padding: 0 18px; font-size: 14px; }
+.action-boundary { font-size: 12px; line-height: 1.8; color: var(--muted-foreground); margin-top: 10px; }
+.case-utilities { display: flex; gap: 4px; margin: 7px -10px 0; }
+.case-utilities button { color: var(--primary); font-size: 12px; }
+.latest-case-note { display: flex; gap: 8px; font-size: 12px; line-height: 1.7; padding: 10px; background: var(--secondary); margin-top: 7px; }
+.latest-case-note svg { margin-top: 4px; }
+.latest-case-note span { overflow-wrap: anywhere; }
+.copilot-dock { margin-top: 12px; border-top: 1px solid var(--rule); }
+.copilot-dock > section { margin-top: 12px; }
+.copilot-dock [data-copilot-source] .grid { grid-template-columns: 1fr; gap: 10px; }
+.execution-comparison { display: grid; grid-template-columns: 195px 1fr 24px 1fr 24px 1.15fr; align-items: center; gap: 16px; padding: 20px 22px; margin-top: 24px; background: var(--surface-sunken); border-radius: 8px; }
+.execution-heading { display: flex; gap: 12px; align-items: flex-start; color: var(--primary); }
+.execution-heading h3 { font-size: 14px; font-weight: 600; }
+.execution-heading p { font-size: 11px; color: var(--muted-foreground); margin-top: 5px; }
+.execution-comparison button { text-align: left; }
+.execution-comparison button strong { display: block; font-size: 18px; font-weight: 500; margin-top: 5px; }
+.execution-comparison button small { display: block; font-size: 11px; color: var(--muted-foreground); margin-top: 5px; }
+.execution-arrow { width: 16px; color: var(--primary); opacity: .35; }
+
+.runtime-workspace .runtime-tabs { margin-left: 0; }
+.runtime-workspace .current-event-status { margin: 0; padding: 10px 0 14px; }
+.current-event-status ol { gap: 16px; }
+.current-event-status ol > li { gap: 10px; }
+.current-event-status ol > li > span { display: grid; grid-template-columns: 6px auto; column-gap: 7px; row-gap: 3px; font-size: 12px; }
+.current-event-status ol small { grid-column: 2; font-size: 10px; }
+.runtime-event-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 365px; gap: 24px; }
+.runtime-workspace .event-scene { height: 370px; }
+.event-scene .runtime-layer-label, .event-scene .runtime-layer-leader, .event-scene > span.border-l { display: none; }
+.event-scene .runtime-layer-label { width: 145px; }
+.event-scene .runtime-source-label { width: 130px; }
+.event-scene .runtime-source-label strong { font-size: 14px; }
+.event-scene .runtime-source-label span { font-size: 10px; }
+.event-scene .runtime-layer-label span { font-size: 11px; }
+.event-scene .runtime-layer-leader { width: 24px; }
+.event-scene .scene-object-label { width: 138px; min-width: 120px; }
+.event-scene .scene-object-label strong { font-size: 16px; }
+.event-scene button.absolute.w-56 { width: 135px; }
+.event-scene button.absolute.w-56 strong { font-size: 15px; }
+.event-scene button.absolute.w-56 span { font-size: 11px; }
+.event-inspector { border-left: 1px solid var(--rule); padding-left: 24px; min-width: 0; }
+.event-value-change { display: flex; align-items: center; gap: 14px; font-size: 36px; font-weight: 500; margin-top: 8px; }
+.event-value-change > span { color: var(--muted-foreground); }
+.event-value-change > strong { font-weight: 500; color: var(--primary); }
+.event-value-change > small { font-size: 13px; font-weight: 400; color: var(--muted-foreground); }
+.event-transformation { margin-top: 14px; }
+.event-field-mapping { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; padding: 12px 0; }
+.event-field-mapping code { font-size: 13px; overflow-wrap: anywhere; }
+.event-field-mapping svg { margin: 2px 0; transform: rotate(90deg); }
+.event-object-ref { padding: 8px 0; }
+.event-object-ref p { font-size: 12px; overflow-wrap: anywhere; margin-top: 5px; }
+.event-object-ref code { font-size: 10px; color: var(--muted-foreground); overflow-wrap: anywhere; }
+.event-locator { font-size: 11px; color: var(--muted-foreground); margin-top: 6px; }
+.event-locator summary { color: var(--primary); cursor: pointer; }
+.event-locator p { overflow-wrap: anywhere; margin-top: 8px; }
+.runtime-business-result { display: flex; align-items: center; gap: 16px; padding: 12px 0 0; margin-top: 12px; border-top: 1px solid var(--rule); }
+.runtime-business-result h3 { font-size: 16px; color: var(--primary); font-weight: 500; margin-top: 5px; }
+.runtime-business-result p { font-size: 11px; color: var(--muted-foreground); line-height: 1.7; margin-top: 4px; }
+.runtime-business-result button { padding: 0; height: 30px; margin-top: 0; font-size: 12px; margin-left: auto; }
+.runtime-workspace .event-rail { margin-top: 16px; padding: 12px 16px; border: 0; border-radius: 8px; }
+.event-rail-heading { width: 140px; flex-shrink: 0; }
+.event-rail-heading strong { display: block; font-size: 14px; margin-top: 4px; font-weight: 500; }
+.event-rail-heading small { display: block; font-size: 10px; margin-top: 4px; color: var(--muted-foreground); }
+.event-sequence { display: flex; flex: 1; gap: 10px; min-width: 0; overflow-x: auto; padding: 3px; }
+.event-sequence button { min-width: 92px; padding: 8px 12px; border-radius: 5px; text-align: left; }
+.event-sequence .rail-history::before { display: none; }
+.event-source { font-size: 10px; color: var(--muted-foreground); }
+.event-sequence button strong { display: block; font-size: 17px; font-weight: 500; margin: 4px 0; }
+.event-sequence button small { display: block; font-size: 10px; color: var(--muted-foreground); }
+.event-sequence .selected-event { background: var(--primary); color: white; }
+.event-sequence .selected-event .event-source, .event-sequence .selected-event small { color: #ffffffb3; }
+.event-play-controls { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-left: 16px; flex-shrink: 0; }
+.event-play-controls button { font-size: 12px; }
+.runtime-empty { padding: 80px; text-align: center; }
+.runtime-empty p { margin: 16px 0; font-size: 14px; color: var(--muted-foreground); }
+
+.scenario-inputs { display: flex; align-items: center; gap: 40px; padding: 16px 0; border-bottom: 1px solid var(--rule); margin-top: 10px; }
+.scenario-inputs > div:first-child { flex: 1; }
+.scenario-inputs strong { display: block; margin-top: 5px; font-size: 16px; font-weight: 500; }
+.validation-workspace .validation-gates { margin-top: 16px; border-radius: 8px; }
+.validation-workspace .validation-gates .gate-tunnel { padding: 18px 22px 22px; }
+.validation-workspace .lab-scene { height: 350px; }
+.validation-workspace .scenario-conclusion h2 { font-size: 28px; }
+.validation-workspace .scenario-conclusion p { font-size: 13px; }
+.validation-workspace .scene-object-label .t-fact { font-size: 42px; }
+.focused-gate-evidence { padding: 16px; background: var(--secondary); border-radius: 6px; }
+
+@media (min-width: 1700px) {
+  .case-workspace { grid-template-columns: minmax(0, 1fr) 430px; gap: 44px; }
+  .workflow-workbench .work-scene { height: 350px; }
+  .runtime-event-workspace { grid-template-columns: minmax(0, 1fr) 400px; }
+}

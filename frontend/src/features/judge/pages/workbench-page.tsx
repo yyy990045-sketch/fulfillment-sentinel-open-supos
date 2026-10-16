@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Check, ChevronDown, Circle, CircleAlert, Layers3, MessageSquare } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, MessageSquare, ClipboardCheck, History } from 'lucide-react';
 import { Button } from '../../../components/ui/button.js';
 import { ScrollArea } from '../../../components/ui/scroll-area.js';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../../components/ui/sheet.js';
@@ -10,16 +10,15 @@ import { mappings, phaseLabels, sources } from './demo-data.js';
 import { useProduct } from './product-state.js';
 import { ProductShell } from './product-shell.js';
 import { displayTime } from './product-view.js';
-import { DecisionEvidence, decisionGates } from './decision-evidence.js';
+import { DecisionEvidence, decisionGates, gateLabel } from './decision-evidence.js';
 import { CopilotPanel } from './copilot-panel.js';
-import { ReviewDecision, ReviewReadback } from './review-evidence.js';
 import { anchor, SpatialScene, type SpatialNode } from './spatial-scene.js';
 
 const steps = ['发现异常', '确认处理', '仓库执行', '重新核对', '完成'];
 const labels = ['订单要求', '生产完成', '质检放行', '仓库计划'];
 
 export function WorkbenchPage() {
-  const { view, views, selectOrder: setSelected, advance, addNote, loading, backendError, refresh, actionBusy, actionError, review, reviewStep } = useProduct();
+  const { view, views, selectOrder: setSelected, advance, addNote, loading, backendError, refresh, actionBusy, actionError, review } = useProduct();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const evidence = review ? params.get('evidence') : null;
@@ -39,13 +38,11 @@ export function WorkbenchPage() {
   const step = { quality: 0, decision: 1, execution: 2, recheck: 3, closed: 5 }[order.phase];
   const conflict = gap > 0;
 
-  // UI-R10: 主业务场景。四源横向铺开，冲突落在 QMS→WMS 断口。
-  // 右侧留给 Action Dock；四源刻意减小 scale，避免 3D 体块向下盖住自己的事实数字。
   const nodes: SpatialNode[] = [
-    { id: 'ERP', kind: 'order', x: 148, y: 268, scale: 1.5 },
-    { id: 'MES', kind: 'factory', x: 408, y: 248, scale: 1.5 },
-    { id: 'QMS', kind: 'quality', x: 652, y: 268, scale: 1.5, waiting: released === null },
-    { id: 'WMS', kind: 'warehouse', x: 888, y: 268, scale: 1.55, risk: conflict },
+    { id: 'ERP', kind: 'order', x: 154, y: 224, scale: 1.5 },
+    { id: 'MES', kind: 'factory', x: 486, y: 204, scale: 1.5 },
+    { id: 'QMS', kind: 'quality', x: 810, y: 224, scale: 1.5, waiting: released === null },
+    { id: 'WMS', kind: 'warehouse', x: 1146, y: 224, scale: 1.55, risk: conflict },
   ];
 
   async function act() {
@@ -68,84 +65,73 @@ export function WorkbenchPage() {
     ? '质量放行记录尚未到达，等待质量数据更新。'
     : conflict
       ? `同一订单的质量放行 ${released} 件，仓库仍计划执行 ${order.quantities[3]} 件。`
-      : `同一订单的质量放行与仓库执行均为 ${released} 件，${order.phase === 'closed' ? '已完成复核' : '可以重新核对'}。`;
+      : `同一订单的质量放行与仓库执行均为 ${released} 件，${view.workflow.status === 'REVALIDATED_CLOSED' ? '已完成复核' : view.workflow.status === 'NO_CONFLICT' ? '当前没有数量冲突' : '可以重新核对'}。`;
 
-  return <ProductShell page='workbench'><main className='desktop-space relative'>
+  const gates = decisionGates(view);
+  const authorized = ['execution', 'recheck', 'closed'].includes(order.phase) && view.workflow.status !== 'NO_CONFLICT';
+  const closed = view.workflow.status === 'REVALIDATED_CLOSED';
+  const noConflict = view.workflow.status === 'NO_CONFLICT';
+  const warehouseEvents = view.events.filter(event => event.source === 'WMS');
+  const update = warehouseEvents.filter(event => event.before !== undefined && !event.pending).at(-1);
+  const warehouseChanged = Boolean(update);
+  const title = noConflict ? '当前履约数量无冲突' : closed ? '内部差异已复核，客户需求继续跟踪' : order.phase === 'execution' ? '方案已确认，等待仓库来源更新' : order.phase === 'quality' ? '判断条件尚未齐备，暂不处置数量' : order.phase === 'recheck' ? '仓库新事实已到达，等待重新核对' : `${gap} 件执行缺口，需要调整仓库计划`;
+  const mainDisabled = actionBusy || (selected === 'SO-IND-001' && (loading || backendError || order.origin !== 'backend-live'));
 
-    {/* ── L2/L4 业务身份条：紧凑，仅占一行 + 一行结论，把高度让给主场景 ── */}
-    <header className='flex items-end justify-between gap-6 pt-5'>
-      <div className='flex min-w-0 items-center gap-5'>
-        <Button variant='ghost' className='queue-entry' onClick={() => setDrawer('queue')}>待处理 <b>{orders.filter(item => item.phase !== 'closed').length}</b><ChevronDown /></Button>
-        <button className='flex items-center gap-2.5 text-left' onClick={() => setDrawer('order')} aria-label='查看当前订单信息'>
-          <h1 className='t-l2'>{order.id}</h1><ChevronDown className='size-4 text-muted-foreground' />
-        </button>
-        <span className='rule-y h-6' />
-        <p className='t-l4 flex min-w-0 items-center gap-3 truncate font-normal text-muted-foreground'>
-          <span className='text-foreground'>{order.customer}</span><span>{order.product}</span>
-          <span>行 {order.line}</span><span>{order.due} 交付</span><span>{order.owner}</span>
-        </p>
+  return <ProductShell page='workbench'><main className='desktop-space workflow-workbench'>
+    <header className='case-toolbar'>
+      <div className='flex items-center gap-4'>
+        <Button variant='ghost' className='queue-entry' onClick={() => setDrawer('queue')}>订单队列 <b>{orders.filter(item => item.phase !== 'closed').length} 待处理</b><ChevronDown /></Button>
+        <button className='flex items-center gap-2 text-left' onClick={() => setDrawer('order')} aria-label='查看当前订单信息'><h1 className='t-l2'>{order.id}</h1><ChevronDown className='size-4 text-muted-foreground' /></button>
+        <span className='t-l5 text-muted-foreground'>{order.customer} · {order.product} · {order.line}</span>
       </div>
-      <span className={cn('flex shrink-0 items-center gap-2 t-l4', conflict ? 'text-risk' : 'text-primary')}>
-        <span className='size-1.5 rounded-full bg-current' />{phaseLabels[order.phase]}
-      </span>
+      <span className='source-caption'>{view.workflow.actionMode === 'runtime' ? '平台链路 · 受控模拟工业来源' : '预置案例 · 本地交互演示'}</span>
     </header>
+    <section className='case-conclusion' aria-label='当前履约风险'>
+      <div><p className='eyebrow'>{closed ? '执行核验' : '履约风险处置'}</p><h2 className={cn('case-headline', conflict ? 'text-risk' : 'text-primary')}>{title}</h2><p className='t-l4 mt-2 text-muted-foreground'>{reason}</p></div>
+      <div className={cn('risk-quantity', conflict && 'text-risk')}><span className='t-l5'>{released === null ? '等待来源' : closed || noConflict ? '待继续履约' : '执行缺口'}</span><strong>{released === null ? '—' : conflict ? gap : Math.max(0, remaining)}<small>件</small></strong></div>
+    </section>
+    {(loading || backendError) && <p role='status' className='sync-message'>{loading ? '正在读取平台来源状态…' : <><span>来源同步失败，当前显示的历史或演示信息不作为最新运行事实。</span><button className='ml-3 underline' onClick={refresh}>重新同步</button></>}</p>}
 
-    {/* ── L1：结论降为"编辑性陈述"，不再与冲突数字抢第一视觉 —— 字号由 t-l1 下调 12% ── */}
-    <div className='mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-1'>
-      <p className={cn('t-l1-editorial', conflict ? 'text-risk' : 'text-primary')}>{reason}</p>
-      <p className='t-l4 font-normal text-muted-foreground'>
-        客户原订单仍为 {order.quantities[0]} 件 · 当前可交付 {released ?? '等待质量覆盖'}{released !== null && ' 件'} · {released !== null ? remaining > 0 ? `剩余 ${remaining} 件继续履约` : '当前客户需求已覆盖' : '后续业务判断暂不执行'}
-      </p>
-      {(loading || backendError) && <span role='status' className='t-l5'>{loading ? '正在同步订单状态…' : <><span>暂时无法同步，当前展示演示案例</span><button className='ml-2 text-primary' onClick={refresh}>重新同步</button></>}</span>}
+    <div className='case-workspace'>
+      <section aria-label='来源事实与决策依据' className='case-investigation'>
+        <div className='section-heading'><h3>核对同一订单的四个来源</h3><button onClick={() => setDrawer('source')}>查看来源记录<ArrowRight className='size-3.5' /></button></div>
+        <SpatialScene nodes={nodes} links={[{ from: 'ERP', to: 'MES' }, { from: 'MES', to: 'QMS', stopped: released === null }, { from: 'QMS', to: 'WMS', risk: conflict, stopped: released === null }]} className='work-scene'>
+          <div className='scene-baseplane' />
+          {nodes.map((node, i) => <button key={node.id} className='scene-object-label text-center' style={anchor(node.x, node.y + 114)} onClick={() => setDrawer('source')} aria-label={`${sources[i]} 来源事实`}>
+            <span className='object-hit' /><span className='source-object-name'>{currentLabels[i]} <small>{sources[i]}</small></span>
+            <motion.strong key={order.quantities[i]} initial={{ opacity: .6, y: 3 }} animate={{ opacity: 1, y: 0 }} className={cn('source-object-quantity', node.risk && 'text-risk')}>{order.quantities[i] ?? '等待'}{order.quantities[i] !== null && <small>件</small>}</motion.strong>
+            <span className='t-l5 mt-3 block text-muted-foreground'>事实 {displayTime(view.facts[i]!.sourceTime)}</span>
+            <span className='t-l5 mt-1 block text-muted-foreground'>进度 {displayTime(view.facts[i]!.progressTime)}</span>
+          </button>)}
+          <span className={cn('quantity-link-label', conflict && 'text-risk')} style={anchor(976, 116)}>{released === null ? '等待覆盖' : conflict ? `超出 ${gap} 件` : '数量一致'}</span>
+        </SpatialScene>
+        <div className='visible-evidence' aria-label='决策依据摘要'>
+          <div className='section-heading'><h3>为什么可以作出这个判断？</h3><button onClick={() => setDrawer('gates')}>查看判断依据<ArrowRight className='size-3.5' /></button></div>
+          <ol>{gates.slice(0, 4).map((gate, i) => <li key={gate.label}><button onClick={() => setDrawer('gates')}><span className='t-l5 text-muted-foreground'>0{i + 1} · {gate.label}</span><strong className={cn(gate.state === 'CONFLICT' || gate.state === 'STOP' ? 'text-risk' : 'text-primary')}>{gateLabel(gate.state)}</strong><span className='t-l5'>{i === 0 ? released === null ? '质量来源尚未齐备' : 'ERP / MES / QMS / WMS' : i === 1 ? view.evidence.resolved ? '订单行、批次与发运关联' : '订单关联未能解析' : i === 2 ? `水位 ${displayTime(view.evidence.watermark)} / 边界 ${displayTime(view.evidence.boundary)}` : released === null ? '条件未齐，停止数量判断' : `质量 ${released} / 仓库 ${order.quantities[3]}`}</span></button></li>)}</ol>
+        </div>
+      </section>
+
+      <section aria-label='当前处置动作' className='decision-dock'>
+        <p className='eyebrow'>当前动作 · {noConflict ? '无须处置' : phaseLabels[order.phase]}</p>
+        <h3 className='decision-title'>{noConflict ? '保持来源同步，持续核对' : action.title}</h3>
+        <div className='plan-quantity'><span>{closed ? '当前仓库执行' : '本次内部方案'}</span><strong>{released === null ? '等待' : released}<small>{released !== null && '件'}</small></strong><span>客户原订单 {order.quantities[0]} 件</span></div>
+        <Button className='primary-case-action' onClick={() => void act()} disabled={mainDisabled}>{actionBusy ? '正在同步处理状态…' : action.button}<ArrowRight /></Button>
+        <p className='action-boundary'>{order.phase === 'decision' ? '确认仅记录内部处理意图，不改变仓库来源数量。' : order.phase === 'execution' ? `已确认 ${released} 件；当前仓库仍为 ${order.quantities[3]} 件。只有新来源事实才能推进核验。` : closed ? '关闭的是本次内部差异，不代表已经发货或客户接受短交付。' : noConflict ? '当前无数量冲突，不代表经过人工处置及复核关闭。' : '来源证据齐备后继续处理。'}</p>
+        {actionError && <p role='alert' className='t-l5 mt-2 text-risk'>{actionError}</p>}
+        <div className='case-utilities'><Button variant='ghost' size='sm' onClick={() => setDrawer('note')}><MessageSquare />添加备注{order.notes.length > 0 && <span>({order.notes.length})</span>}</Button><Button variant='ghost' size='sm' onClick={() => { setHistoryStep(step); setDrawer('history'); }}><History />查看处理记录</Button></div>
+        {order.notes.length > 0 && <p className='latest-case-note'><MessageSquare className='size-3.5 shrink-0' /><span>{order.notes.at(-1)}</span></p>}
+        <div className='copilot-dock'><CopilotPanel key={selected} review={review} evidenceRequest={evidence === 'ai' ? params.get('request') ?? 'evidence' : null} view={view} expanded={copilotExpanded} onExpanded={expanded => setExpandedCase(expanded ? selected : null)} /></div>
+      </section>
     </div>
 
-    {/* ── 处理流程：细规则线上的五段轨，非卡片 ── */}
-    <ol className='rule-x mt-4 flex w-fit items-center gap-4 pt-3' aria-label='处理流程'>{steps.map((label, i) => <li key={label} className='flex items-center gap-4'><button className={cn('t-l5 flex items-center gap-2 text-muted-foreground', i === step && 'font-semibold text-primary', i < step && 'text-primary')} onClick={() => { setHistoryStep(i); setDrawer('history'); }}>{i < step ? <Check className='size-3.5' /> : i === step ? <span className='size-1.5 rounded-full bg-primary ring-4 ring-primary/10' /> : <Circle className='size-3 text-muted-foreground/40' />}{label}</button>{i < 4 && <ArrowRight className='size-3 text-primary/20' />}</li>)}</ol>
-
-    {review && <ReviewDecision view={view} open={() => setDrawer('gates')} />}
-    {review && reviewStep === 3 && selected === 'SO-IND-001' && <ReviewReadback view={view} />}
-
-    {/* ══ 主业务场景：第一视觉中心。QMS96 → WMS100 的断裂与 +4 是画面最大元素 ══ */}
-    <SpatialScene nodes={nodes} links={[{ from: 'ERP', to: 'MES' }, { from: 'MES', to: 'QMS', stopped: released === null }, { from: 'QMS', to: 'WMS', risk: conflict, stopped: released === null }]} className='work-scene'>
-      <div className='scene-baseplane' />
-      <div className='scene-horizon' />
-
-      {/* 四源事实：数字是页面绝对第一视觉（t-fact-hero），标签降到 L5 */}
-      {nodes.map((node, i) => <button key={node.id} className='scene-object-label text-center' style={anchor(node.x, node.y + 92)} onClick={() => setDrawer('source')} aria-label={`${sources[i]} 来源事实`}>
-        <span className='object-hit' />
-        <span className='t-l5 block text-muted-foreground'>{currentLabels[i]} <small className='ml-1'>{sources[i]}</small></span>
-        <motion.strong key={order.quantities[i]} initial={{ opacity: .6, y: 3 }} animate={{ opacity: 1, y: 0 }} className={cn('t-fact-hero mt-1', node.risk && 'text-risk', order.quantities[i] === null && 'text-4xl text-muted-foreground')}>
-          {order.quantities[i] ?? '等待'}{order.quantities[i] !== null && <small className='ml-1.5 text-base font-normal text-muted-foreground'>件</small>}
-        </motion.strong>
-        <span className='t-l5 mt-2 block text-muted-foreground'>来源 {displayTime(view.facts[i]!.sourceTime)}</span>
-        <span className='t-l5 mt-0.5 block text-primary'>{Date.parse(view.facts[i]!.progressTime) >= Date.parse(view.evidence.boundary) ? '来源进度已覆盖' : '等待来源覆盖交期＋1小时'}</span>
-      </button>)}
-
-      {/* 冲突章：+4 是页面最大字号 —— 5 秒内必须先看到它。落在 QMS→WMS 断口正上方 */}
-      <div className='absolute -translate-x-1/2 text-center' style={anchor(788, 58)}>
-        {conflict ? <>
-          <span className='t-l3 inline-flex items-center gap-1.5 font-semibold text-risk'><CircleAlert className='size-5' />计划超过可放行</span>
-          <p className='t-gap-hero mt-1 text-risk'>{gap}<small className='ml-2 text-2xl font-normal'>件</small></p>
-        </> : <p className='t-l3 flex items-center gap-2 text-primary'><Check className='size-5' />{released === null ? '等待质量来源' : '执行数量已对齐'}</p>}
-      </div>
-
-      {/* 业务语言，不是技术字段：客户原订单不受内部处置影响 */}
-      <p className='t-l4 absolute max-w-[430px] text-muted-foreground' style={anchor(148, 520)}>客户原订单仍为 {order.quantities[0]} 件，内部处置不改变原始订单要求。</p>
-        <section aria-label='当前处置动作' className='work-action text-center' style={anchor(1144, 178)}>
-          <p className='t-l5 text-muted-foreground'>本次可执行数量：{released === null ? '等待来源覆盖' : `${released} 件`}</p>
-          <motion.p key={order.phase} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className='t-l3 mt-1.5'>{action.title}</motion.p>
-          <Button className='mt-3 min-w-36 rounded-full px-7' onClick={() => void act()} disabled={actionBusy || (selected === 'SO-IND-001' && (loading || backendError || order.origin !== 'backend-live'))}>{actionBusy ? '正在同步处理状态…' : action.button}<ArrowRight /></Button>
-          <p className='t-l5 mt-3 text-muted-foreground'>{order.phase === 'decision' ? '确认只授权内部方案，仓库事实须由来源更新。' : order.phase === 'execution' ? '已授权内部方案；仓库来源仍未改变。' : order.phase === 'closed' ? '内部差异已复核，客户剩余需求继续保留。' : '来源证据齐备后继续处理。'}</p>
-          <div className='mt-1.5 flex justify-center gap-2'>
-            <Button variant='ghost' size='sm' onClick={() => navigate(`/runtime?case=${selected}&tab=data`)}><Layers3 />查看来源</Button>
-            <Button variant='ghost' size='sm' onClick={() => setDrawer('gates')}>查看判断依据</Button>
-            <Button variant='ghost' size='sm' onClick={() => setDrawer('note')}><MessageSquare />添加备注{(notes[selected] ?? []).length > 0 && <span className='size-1.5 rounded-full bg-primary' />}</Button>
-          </div>
-          {actionError && <p role='alert' className='t-l5 mt-2 text-risk'>{actionError}</p>}
-          <CopilotPanel key={selected} review={review} evidenceRequest={evidence === 'ai' ? params.get('request') ?? 'evidence' : null} view={view} expanded={copilotExpanded} onExpanded={expanded => setExpandedCase(expanded ? selected : null)} />
-        </section>
-    </SpatialScene>
-
+    <section className='execution-comparison' aria-label='授权与执行核验对照'>
+      <div className='execution-heading'><ClipboardCheck className='size-5' /><div><h3>授权与执行核验</h3><p>三件不同的事，逐项留证</p></div></div>
+      <button onClick={() => { setHistoryStep(1); setDrawer('history'); }}><span className='eyebrow'>01 内部授权</span><strong>{authorized ? `已确认 ${released} 件` : noConflict ? '无处置授权' : '尚未确认'}</strong><small>{authorized ? '人工处理意图，未改写来源' : '等待负责人确认方案'}</small></button>
+      <ArrowRight className='execution-arrow' />
+      <button onClick={() => navigate(`/runtime?case=${selected}&tab=data${warehouseChanged ? '&stage=1&qty=' + order.quantities[3] : ''}`)}><span className='eyebrow'>02 仓库来源回读</span><strong>{warehouseChanged ? `${update!.before} → ${update!.value} 件` : `当前 ${order.quantities[3]} 件`}</strong><small>{warehouseChanged ? `新来源事实 · ${update!.time}` : authorized && !closed ? '等待新的仓库来源事实' : '查看当前来源记录'}</small></button>
+      <ArrowRight className='execution-arrow' />
+      <button onClick={() => setDrawer('gates')}><span className='eyebrow'>03 服务端复核</span><strong className={closed ? 'text-primary' : ''}>{closed ? '内部差异已关闭' : noConflict ? '当前无冲突' : order.phase === 'recheck' ? '等待重新核对' : '尚未完成复核'}</strong><small>{released === null ? '数量处置尚未就绪' : remaining > 0 ? `客户剩余 ${remaining} 件需求继续保留` : '客户需求数量已覆盖'}</small></button>
+    </section>
     <Sheet open={drawer !== null} onOpenChange={open => { if (!open) setDrawer(null); }}><SheetContent><SheetHeader><SheetTitle>{drawer === 'queue' ? '订单队列' : drawer === 'note' ? '处理备注' : drawer === 'history' ? '处理历史' : drawer === 'order' ? order.id : drawer === 'gates' ? '为什么这样判断？' : '来源事实'}</SheetTitle><SheetDescription>{drawer === 'queue' ? '选择当前需要处理的订单' : `${order.id} · ${order.line}`}</SheetDescription></SheetHeader><ScrollArea className='flex-1 pr-3'>
       {drawer === 'gates' && <><DecisionEvidence view={view} />{order.phase === 'recheck' && <Button className='mt-6 rounded-full' disabled={decisionGates(view).slice(0, 4).some(gate => gate.state !== 'PASS')} onClick={() => { advance(selected); setDrawer(null); }}>依据已核对，完成复核<Check /></Button>}</>}
       {drawer === 'queue' && <div className='space-y-2'>{[false, true].map(closed => <section key={String(closed)}><h3 className='my-4 t-l5'>{closed ? '已处理' : '待处理'}</h3>{orders.filter(item => (item.phase === 'closed') === closed).map(item => <button key={item.id} onClick={() => { setSelected(item.id); setDrawer(null); }} className='surface-inset mb-2 w-full p-5 text-left hover:bg-secondary'><b className='text-base'>{item.id}</b><span className='t-l4 mt-2 block text-primary'>{phaseLabels[item.phase]}</span><span className='t-l5 mt-1 block text-muted-foreground'>{item.phase === 'quality' ? '质量数据尚未覆盖判断时间' : item.phase === 'execution' ? '方案已确认，等待仓库更新' : item.phase === 'closed' ? '执行数量已经重新一致' : '发货计划超过可放行数量'}</span><small className='t-l5 mt-3 block text-muted-foreground'>{item.priority} · {item.customer} · {item.due}</small></button>)}{closed && orders.every(item => item.phase !== 'closed') && <p className='t-l4 text-muted-foreground'>处理完成的订单会保留在这里。</p>}</section>)}</div>}
