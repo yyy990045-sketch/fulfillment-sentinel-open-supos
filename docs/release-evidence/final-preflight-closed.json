@@ -1,0 +1,66 @@
+{
+  "at": "2026-10-13T14:47:39.168Z",
+  "mode": "read-only",
+  "status": {
+    "PLATFORM_READY": "PASS",
+    "APP_HEALTHY": "PASS",
+    "MQTT_READY": "PASS",
+    "FLOW_READY": "PASS",
+    "UNS_READY": "PASS",
+    "CASE_READY": "PASS",
+    "AI_OPTIONAL": "WARN"
+  },
+  "context": {
+    "composeProject": "fulfillment-sentinel-public-rc1",
+    "label": "fulfillment-sentinel-public-rc1",
+    "networks": [
+      "fulfillment-sentinel-public-rc1_default",
+      "supos_default_network"
+    ],
+    "appPort": 13415,
+    "platform": "http://backend:8080",
+    "mqtt": "mqtt://emqx:1883",
+    "nodeRed": "http://nodered:1880"
+  },
+  "evidence": {
+    "healthHttp": 200,
+    "platformCode": 200,
+    "flowMatchedPaths": 8,
+    "flowDeployedNodes": 26,
+    "unsModels": [
+      "J2_ERP_OrderLine",
+      "J2_MES_Production",
+      "J2_QMS_Quality",
+      "J2_WMS_Shipment",
+      "J2_SourceProgress"
+    ],
+    "unsCurrentReadable": true,
+    "unsCurrent": {
+      "ERP": 100,
+      "MES": 96,
+      "QMS": 96,
+      "WMS": 96,
+      "progress": "2026-03-01T08:00:00.000Z"
+    },
+    "case": {
+      "initialized": true,
+      "id": "SO-IND-001",
+      "status": "REVALIDATED_CLOSED",
+      "facts": {
+        "ERP": 100,
+        "MES": 96,
+        "QMS": 96,
+        "WMS": 96
+      },
+      "watermark": "2026-03-01T08:00:00.000Z",
+      "sourceProgress": {
+        "ERP": "2026-03-01T08:00:00.000Z",
+        "MES": "2026-03-01T08:00:00.000Z",
+        "QMS": "2026-03-01T08:00:00.000Z",
+        "WMS": "2026-03-01T08:00:00.000Z"
+      },
+      "eventCount": 13
+    },
+    "ai": "not configured; deterministic flow available"
+  }
+}

@@ -1,0 +1,5 @@
+apiVersion: v4alpha1
+modules:
+  - id: fulfillment-sentinel
+    code: fulfillment-sentinel
+    name: 履约哨兵

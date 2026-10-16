@@ -1,0 +1,18 @@
+apiVersion: v4alpha1
+menus:
+  - code: fulfillment_sentinel
+    parentCode:
+    moduleId: fulfillment-sentinel
+    name: 履约哨兵
+    type: 1
+    openType: 0
+    showType: 1
+    iconType: 1
+    icon: /apps/yyy990045-sketch-fulfillment-sentinel/favicon.svg
+    url: /apps/yyy990045-sketch-fulfillment-sentinel/
+    routerPrefix: true
+    sort: 9000
+    desc:
+    hide: false
+    operations:
+    terminals: [ PC_WEB ]

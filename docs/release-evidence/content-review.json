@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-13",
+  "scope": "All publication source files including hidden files; values never printed",
+  "findings": [],
+  "pass": true,
+  "environmentTemplates": 2,
+  "upstreamAttributionContactOccurrences": 101,
+  "attributionPolicy": "Upstream license contact lines preserved; not project operator contacts",
+  "reviewedDemoData": "DEMO_DATA plus demo-seed use seeded records, no customer export/database/real credentials included",
+  "assets": {
+    "externalImages": 0,
+    "distributedFontFiles": 0,
+    "externalTextures": 0,
+    "svgFiles": [
+      "deploy/supos-app/statics/favicon.svg"
+    ],
+    "submodules": 0
+  },
+  "reviewedPlaceholderContexts": [
+    "tests/copilot-ai.test.ts fake provider keys; no real model requests",
+    "blank environment credential fields",
+    "Compose example service DNS and loopback ports"
+  ]
+}

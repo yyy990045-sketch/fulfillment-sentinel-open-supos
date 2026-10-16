@@ -1,0 +1,997 @@
+export type SqliteStatementLike = {
+  all(...params: unknown[]): unknown[];
+  get(...params: unknown[]): unknown;
+  run(...params: unknown[]): unknown;
+};
+
+export type SqliteDatabaseLike = {
+  exec(sql: string): void;
+  prepare(sql: string): SqliteStatementLike;
+};
+
+export type SqliteMigration = {
+  version: string;
+  sql: string;
+};
+
+export const V2_MIGRATIONS: SqliteMigration[] = [
+  {
+    version: "001_v2_core",
+    sql: `
+      CREATE TABLE IF NOT EXISTS fulfillment_contexts (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        business_key TEXT NOT NULL,
+        context_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        opened_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, context_type, business_key)
+      );
+
+      CREATE TABLE IF NOT EXISTS source_systems (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        system_type TEXT NOT NULL,
+        authority_level TEXT NOT NULL,
+        status TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, system_type, name)
+      );
+
+      CREATE TABLE IF NOT EXISTS business_entities (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        business_key TEXT NOT NULL,
+        attributes_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, context_id, entity_type, business_key),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS source_documents (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        source_system_id TEXT NOT NULL,
+        external_document_id TEXT NOT NULL,
+        document_type TEXT NOT NULL,
+        content_hash TEXT NOT NULL,
+        received_at TEXT NOT NULL,
+        effective_at TEXT,
+        version TEXT NOT NULL,
+        context_id TEXT,
+        entity_id TEXT,
+        file_name TEXT,
+        mime_type TEXT,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, source_system_id, external_document_id, version),
+        FOREIGN KEY (tenant_id, source_system_id)
+          REFERENCES source_systems (tenant_id, id),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, entity_id)
+          REFERENCES business_entities (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS entity_references (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        source_system_id TEXT NOT NULL,
+        external_id TEXT NOT NULL,
+        external_type TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, source_system_id, external_type, external_id),
+        FOREIGN KEY (tenant_id, entity_id)
+          REFERENCES business_entities (tenant_id, id),
+        FOREIGN KEY (tenant_id, source_system_id)
+          REFERENCES source_systems (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS fulfillment_events (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        occurred_at TEXT NOT NULL,
+        recorded_at TEXT NOT NULL,
+        source_system_id TEXT NOT NULL,
+        source_document_id TEXT,
+        payload_json TEXT NOT NULL,
+        idempotency_key TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, source_system_id, idempotency_key),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, entity_id)
+          REFERENCES business_entities (tenant_id, id),
+        FOREIGN KEY (tenant_id, source_system_id)
+          REFERENCES source_systems (tenant_id, id),
+        FOREIGN KEY (tenant_id, source_document_id)
+          REFERENCES source_documents (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS v2_evidence (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        source_system_id TEXT NOT NULL,
+        source_document_id TEXT NOT NULL,
+        source_version TEXT NOT NULL,
+        entity_id TEXT,
+        event_id TEXT,
+        field TEXT NOT NULL,
+        value_json TEXT NOT NULL,
+        value_type TEXT NOT NULL,
+        locator_json TEXT NOT NULL,
+        quote TEXT NOT NULL,
+        confidence REAL NOT NULL,
+        support TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, source_system_id)
+          REFERENCES source_systems (tenant_id, id),
+        FOREIGN KEY (tenant_id, source_document_id)
+          REFERENCES source_documents (tenant_id, id),
+        FOREIGN KEY (tenant_id, entity_id)
+          REFERENCES business_entities (tenant_id, id),
+        FOREIGN KEY (tenant_id, event_id)
+          REFERENCES fulfillment_events (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS fulfillment_events_context_time_idx
+        ON fulfillment_events (tenant_id, context_id, occurred_at, recorded_at, id);
+      CREATE INDEX IF NOT EXISTS v2_evidence_context_time_idx
+        ON v2_evidence (tenant_id, context_id, observed_at, created_at, id);
+      CREATE INDEX IF NOT EXISTS source_documents_context_idx
+        ON source_documents (tenant_id, context_id, received_at, id);
+    `,
+  },
+  {
+    version: "002_rule_engine",
+    sql: `
+      CREATE TABLE IF NOT EXISTS rule_definitions (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        code TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        exception_type TEXT NOT NULL,
+        enabled INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, code)
+      );
+
+      CREATE TABLE IF NOT EXISTS rule_versions (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        rule_id TEXT NOT NULL,
+        version TEXT NOT NULL,
+        status TEXT NOT NULL,
+        config_json TEXT NOT NULL,
+        content_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, rule_id, version),
+        FOREIGN KEY (tenant_id, rule_id)
+          REFERENCES rule_definitions (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS rule_evaluations (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        rule_id TEXT NOT NULL,
+        rule_version_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        observations_json TEXT NOT NULL,
+        metrics_json TEXT NOT NULL,
+        input_hash TEXT NOT NULL,
+        match_key TEXT NOT NULL,
+        evaluated_at TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, context_id, rule_version_id, input_hash),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, rule_id)
+          REFERENCES rule_definitions (tenant_id, id),
+        FOREIGN KEY (tenant_id, rule_version_id)
+          REFERENCES rule_versions (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS exceptions (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        rule_id TEXT NOT NULL,
+        rule_version_id TEXT NOT NULL,
+        rule_evaluation_id TEXT NOT NULL,
+        exception_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        match_key TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, rule_evaluation_id, exception_type),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, rule_id)
+          REFERENCES rule_definitions (tenant_id, id),
+        FOREIGN KEY (tenant_id, rule_version_id)
+          REFERENCES rule_versions (tenant_id, id),
+        FOREIGN KEY (tenant_id, rule_evaluation_id)
+          REFERENCES rule_evaluations (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS exception_evidence (
+        tenant_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        evidence_id TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, exception_id, evidence_id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id),
+        FOREIGN KEY (tenant_id, evidence_id)
+          REFERENCES v2_evidence (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS exception_entities (
+        tenant_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, exception_id, entity_id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id),
+        FOREIGN KEY (tenant_id, entity_id)
+          REFERENCES business_entities (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS rule_evaluations_context_idx
+        ON rule_evaluations (tenant_id, context_id, evaluated_at, id);
+      CREATE INDEX IF NOT EXISTS exceptions_context_idx
+        ON exceptions (tenant_id, context_id, created_at, id);
+    `,
+  },
+  {
+    version: "003_rule_engine_seal",
+    sql: `
+      ALTER TABLE exceptions ADD COLUMN latest_rule_evaluation_id TEXT;
+      ALTER TABLE exceptions ADD COLUMN severity TEXT NOT NULL DEFAULT 'medium';
+      ALTER TABLE exceptions ADD COLUMN title TEXT NOT NULL DEFAULT '';
+      ALTER TABLE exceptions ADD COLUMN summary TEXT NOT NULL DEFAULT '';
+      ALTER TABLE exceptions ADD COLUMN metrics_json TEXT NOT NULL DEFAULT '{}';
+      ALTER TABLE exceptions ADD COLUMN last_detected_at TEXT NOT NULL DEFAULT '';
+      UPDATE exceptions SET latest_rule_evaluation_id = rule_evaluation_id WHERE latest_rule_evaluation_id IS NULL;
+      UPDATE exceptions SET last_detected_at = created_at WHERE last_detected_at = '';
+
+      ALTER TABLE exception_evidence ADD COLUMN role TEXT NOT NULL DEFAULT 'context';
+
+      CREATE UNIQUE INDEX IF NOT EXISTS exceptions_stable_identity_idx
+        ON exceptions (tenant_id, context_id, rule_id, match_key);
+    `,
+  },
+  {
+    version: "004_resolution_bridge",
+    sql: `
+      CREATE TABLE IF NOT EXISTS resolution_cases (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        owner_role TEXT NOT NULL,
+        origin_json TEXT NOT NULL,
+        review_json TEXT,
+        proposed_by TEXT,
+        runtime_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, exception_id),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS resolution_cases_context_idx
+        ON resolution_cases (tenant_id, context_id, updated_at, id);
+    `,
+  },
+  {
+    version: "005_resolution_execution",
+    sql: `
+      CREATE TABLE IF NOT EXISTS resolution_action_receipts (
+        tenant_id TEXT NOT NULL,
+        resolution_case_id TEXT NOT NULL,
+        action_id TEXT NOT NULL,
+        operation_key TEXT NOT NULL,
+        external_request_id TEXT NOT NULL,
+        receipt TEXT NOT NULL,
+        receipt_source TEXT NOT NULL,
+        status TEXT NOT NULL,
+        payload_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, resolution_case_id, action_id, operation_key),
+        FOREIGN KEY (tenant_id, resolution_case_id)
+          REFERENCES resolution_cases (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS resolution_action_receipts_case_idx
+        ON resolution_action_receipts (tenant_id, resolution_case_id, created_at, action_id);
+    `,
+  },
+  {
+    version: "006_grounded_ai_explanations",
+    sql: `
+      CREATE TABLE IF NOT EXISTS grounded_ai_explanations (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        rule_evaluation_id TEXT NOT NULL,
+        input_snapshot_hash TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        model TEXT NOT NULL,
+        status TEXT NOT NULL,
+        output_json TEXT NOT NULL,
+        validation_json TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, exception_id, input_snapshot_hash, provider, model),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id),
+        FOREIGN KEY (tenant_id, rule_evaluation_id)
+          REFERENCES rule_evaluations (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS grounded_ai_explanations_exception_idx
+        ON grounded_ai_explanations (tenant_id, context_id, exception_id, created_at, id);
+    `,
+  },
+  {
+    version: "007_decision_recommendations",
+    sql: `
+      CREATE TABLE IF NOT EXISTS decision_recommendations (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        rule_evaluation_id TEXT NOT NULL,
+        input_snapshot_hash TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        model TEXT NOT NULL,
+        status TEXT NOT NULL,
+        output_json TEXT NOT NULL,
+        validation_json TEXT NOT NULL,
+        history_snapshot_json TEXT NOT NULL,
+        eligibility_json TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, exception_id, input_snapshot_hash, provider, model),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id),
+        FOREIGN KEY (tenant_id, rule_evaluation_id)
+          REFERENCES rule_evaluations (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS decision_recommendations_exception_idx
+        ON decision_recommendations (tenant_id, context_id, exception_id, created_at, id);
+
+      CREATE TABLE IF NOT EXISTS decision_recommendation_dispositions (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        recommendation_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        decision TEXT NOT NULL,
+        selected_option_id TEXT,
+        rationale TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        FOREIGN KEY (tenant_id, recommendation_id)
+          REFERENCES decision_recommendations (tenant_id, id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS decision_recommendation_dispositions_idx
+        ON decision_recommendation_dispositions (tenant_id, recommendation_id, created_at, id);
+    `,
+  },
+  {
+    version: "008_root_cause_hypotheses",
+    sql: `
+      CREATE TABLE IF NOT EXISTS root_cause_analyses (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        rule_evaluation_id TEXT NOT NULL,
+        input_snapshot_hash TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        model TEXT NOT NULL,
+        status TEXT NOT NULL,
+        output_json TEXT NOT NULL,
+        validation_json TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, exception_id, input_snapshot_hash, provider, model),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id),
+        FOREIGN KEY (tenant_id, rule_evaluation_id)
+          REFERENCES rule_evaluations (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS root_cause_analyses_exception_idx
+        ON root_cause_analyses (tenant_id, context_id, exception_id, created_at, id);
+
+      CREATE TABLE IF NOT EXISTS root_cause_hypothesis_reviews (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        analysis_id TEXT NOT NULL,
+        hypothesis_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        decision TEXT NOT NULL,
+        rationale TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        FOREIGN KEY (tenant_id, analysis_id)
+          REFERENCES root_cause_analyses (tenant_id, id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS root_cause_hypothesis_reviews_idx
+        ON root_cause_hypothesis_reviews (tenant_id, analysis_id, hypothesis_id, created_at, id);
+    `,
+  },
+  {
+    version: "009_decision_policy",
+    sql: `
+      CREATE TABLE IF NOT EXISTS policy_definitions (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        version TEXT NOT NULL,
+        name TEXT NOT NULL,
+        priority INTEGER NOT NULL,
+        enabled INTEGER NOT NULL,
+        conditions_json TEXT NOT NULL,
+        decision_json TEXT NOT NULL,
+        content_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id, version)
+      );
+
+      CREATE INDEX IF NOT EXISTS policy_definitions_enabled_idx
+        ON policy_definitions (tenant_id, enabled, priority, id, version);
+
+      CREATE TABLE IF NOT EXISTS policy_evaluations (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        candidate_action_type TEXT NOT NULL,
+        candidate_source TEXT NOT NULL,
+        source_recommendation_id TEXT,
+        source_option_id TEXT,
+        policy_snapshot_hash TEXT NOT NULL,
+        decision_json TEXT NOT NULL,
+        evaluated_by TEXT NOT NULL,
+        evaluated_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id),
+        FOREIGN KEY (tenant_id, source_recommendation_id)
+          REFERENCES decision_recommendations (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS policy_evaluations_exception_idx
+        ON policy_evaluations (tenant_id, context_id, exception_id, evaluated_at, id);
+
+      CREATE UNIQUE INDEX IF NOT EXISTS policy_evaluations_human_unique
+        ON policy_evaluations (tenant_id, exception_id, candidate_action_type, candidate_source, policy_snapshot_hash)
+        WHERE source_recommendation_id IS NULL AND source_option_id IS NULL;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS policy_evaluations_ai_unique
+        ON policy_evaluations (tenant_id, exception_id, candidate_action_type, candidate_source, policy_snapshot_hash, source_recommendation_id, source_option_id)
+        WHERE source_recommendation_id IS NOT NULL AND source_option_id IS NOT NULL;
+    `,
+  },
+  {
+    version: "010_policy_bounded_automation",
+    sql: `
+      CREATE TABLE IF NOT EXISTS automation_runs (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        policy_evaluation_id TEXT NOT NULL,
+        candidate_action_type TEXT NOT NULL,
+        source_recommendation_id TEXT,
+        source_option_id TEXT,
+        executor TEXT NOT NULL,
+        executor_version TEXT NOT NULL,
+        operation_key TEXT NOT NULL,
+        status TEXT NOT NULL,
+        effect_id TEXT,
+        receipt_id TEXT,
+        trigger_source TEXT NOT NULL,
+        triggered_by TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        completed_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, policy_evaluation_id, candidate_action_type, executor_version),
+        UNIQUE (tenant_id, operation_key),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id),
+        FOREIGN KEY (tenant_id, policy_evaluation_id)
+          REFERENCES policy_evaluations (tenant_id, id),
+        FOREIGN KEY (tenant_id, source_recommendation_id)
+          REFERENCES decision_recommendations (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS automation_runs_exception_idx
+        ON automation_runs (tenant_id, context_id, exception_id, created_at, id);
+
+      CREATE TABLE IF NOT EXISTS automation_receipts (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        automation_run_id TEXT NOT NULL,
+        effect_id TEXT NOT NULL,
+        receipt_source TEXT NOT NULL,
+        status TEXT NOT NULL,
+        payload_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, automation_run_id),
+        FOREIGN KEY (tenant_id, automation_run_id)
+          REFERENCES automation_runs (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS internal_work_items (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        source TEXT NOT NULL,
+        action_type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        status TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS internal_work_items_query_idx
+        ON internal_work_items (tenant_id, status, kind, context_id, exception_id, created_at, id);
+    `,
+  },
+  {
+    version: "011_outcome_intelligence",
+    sql: `
+      CREATE TABLE IF NOT EXISTS outcome_definitions (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        version TEXT NOT NULL,
+        name TEXT NOT NULL,
+        exception_code TEXT NOT NULL,
+        baseline_metric_key TEXT NOT NULL,
+        current_evidence_field TEXT NOT NULL,
+        comparison TEXT NOT NULL,
+        target_value_json TEXT NOT NULL,
+        better_direction TEXT NOT NULL,
+        enabled INTEGER NOT NULL,
+        content_hash TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id, version)
+      );
+
+      CREATE INDEX IF NOT EXISTS outcome_definitions_enabled_idx
+        ON outcome_definitions (tenant_id, exception_code, enabled, id, version);
+
+      CREATE TABLE IF NOT EXISTS outcome_evaluations (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        definition_id TEXT NOT NULL,
+        definition_version TEXT NOT NULL,
+        rule_evaluation_id TEXT NOT NULL,
+        resolution_case_id TEXT,
+        automation_run_id TEXT,
+        evidence_ids_json TEXT NOT NULL,
+        baseline_json TEXT NOT NULL,
+        current_json TEXT NOT NULL,
+        status TEXT NOT NULL,
+        definition_snapshot_hash TEXT NOT NULL,
+        evaluated_by TEXT NOT NULL,
+        evaluated_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, exception_id, definition_id, definition_version, definition_snapshot_hash),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, exception_id)
+          REFERENCES exceptions (tenant_id, id),
+        FOREIGN KEY (tenant_id, definition_id, definition_version)
+          REFERENCES outcome_definitions (tenant_id, id, version),
+        FOREIGN KEY (tenant_id, rule_evaluation_id)
+          REFERENCES rule_evaluations (tenant_id, id),
+        FOREIGN KEY (tenant_id, resolution_case_id)
+          REFERENCES resolution_cases (tenant_id, id),
+        FOREIGN KEY (tenant_id, automation_run_id)
+          REFERENCES automation_runs (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS outcome_evaluations_exception_idx
+        ON outcome_evaluations (tenant_id, context_id, exception_id, evaluated_at, id);
+    `,
+  },
+  {
+    version: "012_solution_pack_installations",
+    sql: `
+      CREATE TABLE IF NOT EXISTS solution_pack_installations (
+        tenant_id TEXT NOT NULL,
+        pack_id TEXT NOT NULL,
+        pack_version TEXT NOT NULL,
+        status TEXT NOT NULL,
+        manifest_hash TEXT NOT NULL,
+        config_json TEXT NOT NULL,
+        installed_by TEXT NOT NULL,
+        installed_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, pack_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS solution_pack_installations_status_idx
+        ON solution_pack_installations (tenant_id, status, pack_id);
+    `,
+  },
+  {
+    version: "013_connector_runtime",
+    sql: `
+      CREATE TABLE IF NOT EXISTS connector_installations (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        connector_id TEXT NOT NULL,
+        connector_version TEXT NOT NULL,
+        status TEXT NOT NULL,
+        manifest_hash TEXT NOT NULL,
+        config_json TEXT NOT NULL,
+        secret_ref TEXT,
+        installed_by TEXT NOT NULL,
+        installed_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS connector_installations_active_idx
+        ON connector_installations (tenant_id, status, connector_id);
+
+      CREATE TABLE IF NOT EXISTS connector_outbox (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        connector_installation_id TEXT NOT NULL,
+        work_item_id TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        exception_id TEXT NOT NULL,
+        capability TEXT NOT NULL,
+        operation_key TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        status TEXT NOT NULL,
+        attempt_count INTEGER NOT NULL,
+        available_at TEXT NOT NULL,
+        lease_owner TEXT,
+        lease_expires_at TEXT,
+        last_error_code TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, operation_key),
+        FOREIGN KEY (tenant_id, connector_installation_id)
+          REFERENCES connector_installations (tenant_id, id),
+        FOREIGN KEY (tenant_id, work_item_id)
+          REFERENCES internal_work_items (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS connector_outbox_claim_idx
+        ON connector_outbox (status, available_at, lease_expires_at, created_at, id);
+
+      CREATE TABLE IF NOT EXISTS connector_delivery_attempts (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        outbox_id TEXT NOT NULL,
+        attempt_number INTEGER NOT NULL,
+        worker_id TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        completed_at TEXT NOT NULL,
+        status TEXT NOT NULL,
+        http_status INTEGER,
+        error_code TEXT,
+        response_hash TEXT,
+        PRIMARY KEY (tenant_id, id),
+        FOREIGN KEY (tenant_id, outbox_id)
+          REFERENCES connector_outbox (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS connector_receipts (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        outbox_id TEXT NOT NULL,
+        external_request_id TEXT NOT NULL,
+        external_resource_id TEXT,
+        receipt_source TEXT NOT NULL,
+        status TEXT NOT NULL,
+        payload_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (tenant_id, outbox_id),
+        FOREIGN KEY (tenant_id, outbox_id)
+          REFERENCES connector_outbox (tenant_id, id)
+      );
+    `,
+  },
+  {
+    version: "014_decision_runtime_audit",
+    sql: `
+      CREATE TABLE IF NOT EXISTS decision_runtime_calls (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        model TEXT NOT NULL,
+        state_hash TEXT NOT NULL,
+        question_hash TEXT NOT NULL,
+        answer_json TEXT NOT NULL,
+        latency_ms INTEGER NOT NULL,
+        usage_json TEXT,
+        status TEXT NOT NULL,
+        error_code TEXT,
+        created_by TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS decision_runtime_calls_task_idx
+        ON decision_runtime_calls (tenant_id, task_id, created_at, id);
+    `,
+  },
+  {
+    version: "015_solution_pack_context_bindings",
+    sql: `
+      CREATE TABLE IF NOT EXISTS solution_pack_context_bindings (
+        tenant_id TEXT NOT NULL,
+        pack_id TEXT NOT NULL,
+        pack_version TEXT NOT NULL,
+        context_id TEXT NOT NULL,
+        bound_at TEXT NOT NULL,
+        bound_by TEXT NOT NULL,
+        source TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, pack_id, context_id),
+        UNIQUE (tenant_id, context_id),
+        FOREIGN KEY (tenant_id, context_id)
+          REFERENCES fulfillment_contexts (tenant_id, id),
+        FOREIGN KEY (tenant_id, pack_id)
+          REFERENCES solution_pack_installations (tenant_id, pack_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS solution_pack_context_bindings_pack_idx
+        ON solution_pack_context_bindings (tenant_id, pack_id, context_id);
+    `,
+  },
+  {
+    version: "016_inbound_connector_runtime",
+    sql: `
+      CREATE TABLE IF NOT EXISTS connector_mapping_versions (
+        tenant_id TEXT NOT NULL,
+        connector_id TEXT NOT NULL,
+        mapping_id TEXT NOT NULL,
+        version TEXT NOT NULL,
+        effective_at TEXT NOT NULL,
+        definition_hash TEXT NOT NULL,
+        description TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, connector_id, mapping_id, version)
+      );
+
+      CREATE INDEX IF NOT EXISTS connector_mapping_versions_effective_idx
+        ON connector_mapping_versions (tenant_id, connector_id, mapping_id, effective_at, version);
+
+      CREATE TABLE IF NOT EXISTS connector_sync_states (
+        tenant_id TEXT NOT NULL,
+        connector_installation_id TEXT NOT NULL,
+        record_type TEXT NOT NULL,
+        last_successful_cursor TEXT,
+        last_attempted_cursor TEXT,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, connector_installation_id, record_type),
+        FOREIGN KEY (tenant_id, connector_installation_id)
+          REFERENCES connector_installations (tenant_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS connector_sync_runs (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        connector_installation_id TEXT NOT NULL,
+        connector_id TEXT NOT NULL,
+        record_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        completed_at TEXT,
+        records_read INTEGER NOT NULL,
+        records_accepted INTEGER NOT NULL,
+        records_rejected INTEGER NOT NULL,
+        records_duplicate INTEGER NOT NULL,
+        attempted_cursor TEXT,
+        committed_cursor TEXT,
+        last_error_code TEXT,
+        error_class TEXT,
+        retry_after_ms INTEGER,
+        provider_request_id TEXT,
+        mapping_id TEXT NOT NULL,
+        mapping_version TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        FOREIGN KEY (tenant_id, connector_installation_id)
+          REFERENCES connector_installations (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS connector_sync_runs_installation_idx
+        ON connector_sync_runs (tenant_id, connector_installation_id, record_type, started_at, id);
+
+      CREATE TABLE IF NOT EXISTS connector_source_records (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        connector_id TEXT NOT NULL,
+        connector_installation_id TEXT NOT NULL,
+        record_type TEXT NOT NULL,
+        external_record_id TEXT NOT NULL,
+        source_version TEXT NOT NULL,
+        raw_hash TEXT NOT NULL,
+        locator_json TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        mapping_id TEXT NOT NULL,
+        mapping_version TEXT NOT NULL,
+        first_seen_at TEXT NOT NULL,
+        last_seen_at TEXT NOT NULL,
+        canonical_refs_json TEXT NOT NULL,
+        evidence_refs_json TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id),
+        UNIQUE (
+          tenant_id,
+          connector_installation_id,
+          record_type,
+          external_record_id,
+          source_version,
+          raw_hash,
+          mapping_id,
+          mapping_version
+        ),
+        FOREIGN KEY (tenant_id, connector_installation_id)
+          REFERENCES connector_installations (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS connector_source_records_external_idx
+        ON connector_source_records (tenant_id, connector_installation_id, record_type, external_record_id, observed_at, id);
+
+      CREATE INDEX IF NOT EXISTS connector_source_records_hash_idx
+        ON connector_source_records (tenant_id, connector_installation_id, record_type, raw_hash, mapping_version);
+    `,
+  },
+  {
+    version: "017_inbound_runtime_correctness_seal",
+    sql: `
+      ALTER TABLE connector_source_records
+        ADD COLUMN canonical_committed_at TEXT;
+
+      ALTER TABLE connector_source_records
+        ADD COLUMN downstream_processed_at TEXT;
+
+      UPDATE connector_source_records
+      SET canonical_committed_at = first_seen_at
+      WHERE canonical_committed_at IS NULL;
+
+      ALTER TABLE connector_sync_runs
+        ADD COLUMN records_committed INTEGER NOT NULL DEFAULT 0;
+
+      UPDATE connector_sync_runs
+      SET records_committed = records_accepted
+      WHERE records_committed = 0;
+    `,
+  },
+  {
+    version: "018_security_audit_events",
+    sql: `
+      CREATE TABLE IF NOT EXISTS security_audit_events (
+        tenant_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        actor_type TEXT NOT NULL,
+        subject_id TEXT NOT NULL,
+        roles_json TEXT NOT NULL,
+        action TEXT NOT NULL,
+        resource_type TEXT NOT NULL,
+        resource_id TEXT NOT NULL,
+        result TEXT NOT NULL,
+        occurred_at TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS security_audit_events_tenant_time_idx
+        ON security_audit_events (tenant_id, occurred_at, id);
+
+      CREATE INDEX IF NOT EXISTS security_audit_events_action_idx
+        ON security_audit_events (tenant_id, action, resource_type);
+    `,
+  },
+];
+
+export function runV2Migrations(
+  db: SqliteDatabaseLike,
+  migrations: SqliteMigration[] = V2_MIGRATIONS,
+): string[] {
+  const versions = new Set<string>();
+  for (const migration of migrations) {
+    if (versions.has(migration.version)) throw new Error(`MIGRATION_VERSION_DUPLICATE:${migration.version}`);
+    versions.add(migration.version);
+  }
+  db.exec("PRAGMA foreign_keys = ON; CREATE TABLE IF NOT EXISTS v2_schema_migrations (version TEXT PRIMARY KEY, applied_at TEXT NOT NULL);");
+  const applied = new Set(
+    (db.prepare("SELECT version FROM v2_schema_migrations").all() as Array<{ version: string }>).map((row) => row.version),
+  );
+  const pending = migrations
+    .filter((migration) => !applied.has(migration.version))
+    .sort((left, right) => left.version.localeCompare(right.version));
+
+  for (const migration of pending) {
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      db.exec(migration.sql);
+      db.prepare("INSERT INTO v2_schema_migrations (version, applied_at) VALUES (?, ?)").run(migration.version, new Date().toISOString());
+      db.exec("COMMIT");
+    } catch (error) {
+      try { db.exec("ROLLBACK"); } catch { /* preserve the original migration failure */ }
+      throw error;
+    }
+  }
+  return pending.map((migration) => migration.version);
+}

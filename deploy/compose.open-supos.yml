@@ -1,0 +1,14 @@
+services:
+  app:
+    environment:
+      J2_MQTT_URL: ${J2_MQTT_URL:-mqtt://emqx:1883}
+      SUPOS_BOOTSTRAP_API: ${SUPOS_BOOTSTRAP_API:-http://backend:8080}
+      DEMO_NODERED_URL: ${DEMO_NODERED_URL:-http://nodered:1880}
+    networks:
+      - default
+      - supos
+
+networks:
+  supos:
+    external: true
+    name: ${SUPOS_DOCKER_NETWORK:-supos_default_network}

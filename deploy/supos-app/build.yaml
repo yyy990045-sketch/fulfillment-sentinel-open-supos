@@ -1,0 +1,6 @@
+apiVersion: v4alpha1
+images:
+  - name: fulfillment-sentinel
+    tag: 0.1.0
+    dockerPath: .
+    dockerfile: Dockerfile.supos

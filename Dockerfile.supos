@@ -1,0 +1,25 @@
+ARG NODE_IMAGE=node:24-bookworm-slim
+FROM ${NODE_IMAGE} AS build
+WORKDIR /app
+ENV APP_BASE_PATH=/apps/yyy990045-sketch-fulfillment-sentinel/
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+RUN npm run demo:judge
+
+FROM ${NODE_IMAGE} AS runtime
+WORKDIR /app
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=3410 J2_MQTT_URL=mqtt://emqx:1883 APP_BASE_PATH=/apps/yyy990045-sketch-fulfillment-sentinel/
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/frontend/dist ./frontend/dist
+COPY --from=build /app/src ./src
+COPY --from=build /app/.preview/judge-demo ./.preview/judge-demo
+COPY deploy/demo-seed.json ./deploy/demo-seed.json
+COPY deploy/seed-runtime.mjs ./deploy/seed-runtime.mjs
+COPY LICENSE THIRD_PARTY_NOTICES.md ./
+COPY third_party ./third_party
+EXPOSE 3410
+CMD ["npm", "start"]

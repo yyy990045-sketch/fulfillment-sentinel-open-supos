@@ -1,0 +1,195 @@
+/**
+ * 评委视图（只读聚合）类型。
+ *
+ * 后端返回的是 `JudgeEvidenceManifest`（同 demo:judge 写出的 evidence.json）。
+ * 这里只声明页面真正消费的字段 —— 不做全量镜像，避免前端成为第二份契约。
+ */
+export type JudgeSourceRefView = {
+  role: "order" | "production" | "quality" | "shipment";
+  systemKey: string;
+  systemType: string | null;
+  evidenceId: string;
+  sourceDocumentId: string;
+  field: string;
+  value: unknown;
+  valueType: string;
+  observedAt: string;
+  unsTopic: string | null;
+  rawHash: string | null;
+};
+
+export type JudgeManifestView = {
+  schemaVersion: string;
+  generatedAt: string;
+  scenario: string;
+  scenarioLabel: string;
+  businessQuestion: string;
+  industrialContext: {
+    enterpriseId: string;
+    siteId: string;
+    areaId: string;
+    lineId: string;
+    equipmentIds: string[];
+    unsRootPath: string | null;
+  } | null;
+  businessFacts: {
+    orderedQuantity: number;
+    productionCompletedQuantity: number;
+    difference: number;
+    unit: string;
+  };
+  sources: {
+    order: JudgeSourceRefView | null;
+    production: JudgeSourceRefView | null;
+    quality?: JudgeSourceRefView | null;
+    shipment?: JudgeSourceRefView | null;
+  };
+  uns: {
+    orderTopic: string | null;
+    productionTopic: string | null;
+    topicConvention: string;
+  };
+  evidence: {
+    orderEvidenceId: string | null;
+    productionEvidenceId: string | null;
+    totalCount: number;
+  };
+  rule: {
+    code: string;
+    result: string;
+    expected: number | null;
+    actual: number | null;
+    difference: number | null;
+  };
+  exception: {
+    id: string;
+    code: string;
+    severity: string;
+    title: string;
+    summary: string;
+  } | null;
+  governance: {
+    status: string;
+    stage: string;
+    caseId: string | null;
+    ownerRole: string | null;
+    proposedBy: string | null;
+    approvedBy: string | null;
+    segregationOfDutiesEnforced: boolean;
+  };
+  execution: {
+    status: string;
+    downstream: string | null;
+    receiptId: string | null;
+    mismatches: string[];
+    apiWriteIsNotBusinessCompletion: true;
+  };
+  outcome: {
+    status: string;
+    definitionId: string | null;
+    baseline: number | string | null;
+    current: number | string | null;
+    target: number | string | null;
+    causalAttribution: false;
+  };
+  ai: {
+    provider: string;
+    model: string;
+    recommendationId: string | null;
+    recommendationStatus: string | null;
+    humanDecisionRequired: boolean;
+    canApprove: false;
+    canExecute: false;
+    note: string;
+  };
+  trace: {
+    status: string;
+    failures: string[];
+    hops: string[];
+    evidenceLinks: number;
+    payloadSourcePath: string | null;
+  };
+  truthBoundary: Record<string, boolean>;
+  artifacts: {
+    unsStream: string | null;
+    evidenceManifest: string | null;
+    readback: string | null;
+  };
+  fulfillment?: {
+    version: string;
+    contract: string;
+    businessKey: string;
+    currentCase: "A" | "B" | "C" | "D" | "E";
+    facts: {
+      businessKey: string;
+      sourceOrderLineRef: string;
+      workOrderRef: string;
+      productionLotRef: string;
+      shipmentSourceRef: string;
+      requiredQty: number;
+      dueAt: string;
+      completedQty: number;
+      productionState: string;
+      releasedQty: number;
+      executionCommittedQty: number;
+      sourceProgress: Record<string, string>;
+    };
+    lineage: { status: string; relation: string };
+    cases: Array<{
+      caseId: "A" | "B" | "C" | "D" | "E";
+      label: string;
+      status: string;
+      reason: string;
+      observedStateConflict: boolean;
+      facts: {
+        requiredQty: number;
+        completedQty: number;
+        releasedQty: number;
+        executionCommittedQty: number;
+        sourceProgress: Record<string, string>;
+      };
+      lineage: { status: string; relation: string };
+      globalWatermark: string;
+      dueAtWithGrace: string;
+      disposition: { status: string; authorizedQty: number | null; authority: string };
+      externalObligation: string;
+    }>;
+    realOpenSuposRuntimeVerified: false;
+  };
+  /** §11/§12/§18：真实 open supOS Runtime 的 live 判定（与 A-E 参考用例分离）。 */
+  liveFulfillment?: LiveFulfillmentView | null;
+};
+
+/** Live 判定视图：由真实 canonical runtime events 计算，展示真实来源坐标。 */
+export type LiveFulfillmentView = {
+  mode: "live";
+  contract: string;
+  businessKey: string;
+  status: string;
+  reason: string;
+  externalObligation: string;
+  globalWatermark: string;
+  dueAtWithGrace: string;
+  lineage: { status: string; relation: string };
+  disposition: { status: string; authorizedQty: number | null; authority: string };
+  facts: {
+    requiredQty: number;
+    dueAt: string;
+    completedQty: number;
+    releasedQty: number;
+    executionCommittedQty: number;
+    productionState: string;
+  };
+  sourceProgress: Record<string, string>;
+  sources: Array<{
+    systemKey: string;
+    systemType: string;
+    canonicalTopic: string;
+    sourceTime: string;
+    businessRef: string;
+    quantityField: string | null;
+    quantityValue: number | null;
+  }>;
+  runtimeTruthBoundary: Record<string, boolean>;
+  observations: Record<string, number>;
+};

@@ -1,0 +1,6 @@
+{
+  "scope": "Git source-release candidates incl. untracked nonignored; .git, generated outputs and dependencies excluded from publication",
+  "files": 487,
+  "findings": [],
+  "pass": true
+}

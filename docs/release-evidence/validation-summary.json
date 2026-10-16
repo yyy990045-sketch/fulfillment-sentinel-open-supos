@@ -1,0 +1,122 @@
+{
+  "date": "2026-10-13",
+  "source": "R2 SHA-256 verified extraction; new release candidate root",
+  "platform": {
+    "edition": "Community Edition",
+    "version": "V1.5.0.0-M",
+    "deploymentCommit": "a36787c81d6c2848bb6dc89d649643f0b0119023",
+    "os": "Ubuntu 24.04",
+    "architecture": "linux/amd64",
+    "dockerEngine": "29.1.3",
+    "compose": "2.40.3",
+    "node": "24.20.0"
+  },
+  "checks": {
+    "npmCi": "PASS",
+    "installedPackages": 220,
+    "buildFrontendBackendTypecheck": "PASS",
+    "judgeDeterministic": "PASS",
+    "composeConfig": "PASS",
+    "dockerBuild": "PASS",
+    "candidateContainerStarted": true,
+    "candidateHealth": "PASS",
+    "candidatePreflight": "PASS",
+    "candidatePrepare": "PASS",
+    "candidateVerify": "PASS",
+    "liveAiCalled": false,
+    "aiUnavailableDoesNotBlock": "PASS",
+    "browserOpenedClosedWorkbench": true,
+    "browserReloadVerified": false,
+    "httpRoutes": "PASS"
+  },
+  "judgeResults": [
+    {
+      "case": "A",
+      "status": "NO_CONFLICT"
+    },
+    {
+      "case": "B",
+      "status": "WAITING_FOR_SOURCE_PROGRESS"
+    },
+    {
+      "case": "C",
+      "status": "FULFILLMENT_STATE_CONFLICT"
+    },
+    {
+      "case": "D",
+      "status": "WAITING_FOR_EXECUTION_VERIFICATION"
+    },
+    {
+      "case": "E",
+      "status": "REVALIDATED_CLOSED"
+    }
+  ],
+  "buildBlocker": {
+    "previousFailure": "daemon configured proxy TCP timeout at Docker Hub metadata",
+    "resolvedForCandidateBuild": true,
+    "method": "digest-verified official Node cache load; original Dockerfile unchanged",
+    "globalProxyStillUnchanged": true,
+    "futureUncachedPullRequiresWorkingNetwork": true,
+    "oldApplicationImageUsedAsReplacement": false
+  },
+  "warnings": [
+    "Existing Vite large chunk warning retained; no UI redesign",
+    "npm install-scripts esbuild warning retained; actual build succeeded",
+    "Vitest source preserved but not executed: R2 has no Vitest dependency/npm test"
+  ],
+  "dataBoundary": {
+    "simulatedIndustrialData": true,
+    "realFactoryData": false,
+    "tsdbHistoryVerified": false,
+    "appManagerNativeInstallVerified": false
+  },
+  "COMPOSE_REPRODUCTION_PASS": true,
+  "GITHUB_RELEASE_CANDIDATE_READY": true,
+  "GITHUB_PUBLICATION_COMPLETE": false,
+  "finalBusinessResults": {
+    "at": "2026-10-13T14:47:39.111Z",
+    "steps": [
+      {
+        "name": "CONFLICT",
+        "http": 200,
+        "status": "FULFILLMENT_STATE_CONFLICT",
+        "facts": [
+          100,
+          96,
+          96,
+          100
+        ],
+        "watermark": "2026-03-01T07:00:00.000Z"
+      },
+      {
+        "name": "HUMAN_CONFIRM",
+        "http": 200,
+        "status": "WAITING_FOR_EXECUTION_VERIFICATION",
+        "facts": [
+          100,
+          96,
+          96,
+          100
+        ],
+        "watermark": "2026-03-01T07:00:00.000Z"
+      },
+      {
+        "name": "WMS_RAW_TO_CLOSED",
+        "http": 200,
+        "status": "REVALIDATED_CLOSED",
+        "facts": [
+          100,
+          96,
+          96,
+          96
+        ],
+        "watermark": "2026-03-01T08:00:00.000Z"
+      }
+    ],
+    "unsCurrent": {
+      "ERP": 100,
+      "WMS": 96
+    },
+    "remainingCustomerDemand": 4
+  }
+}

@@ -1,0 +1,495 @@
+[
+  {
+    "type": "tab",
+    "label": "J2 Competition Source Flow",
+    "id": "06159bb21ff3a699",
+    "info": "FINAL J2: 8 source chains (ERP/MES/QMS/WMS + 4 SourceProgress) RAW MQTT -> normalize -> canonical UNS MQTT",
+    "disabled": false
+  },
+  {
+    "id": "j2-erp-mqttin",
+    "type": "mqtt in",
+    "z": "06159bb21ff3a699",
+    "name": "RAW ERP IN",
+    "topic": "/source/j2/erp/order-line",
+    "qos": "2",
+    "datatype": "auto",
+    "broker": "j2-release-broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 180,
+    "y": 100,
+    "wires": [
+      [
+        "j2-erp-normalize"
+      ]
+    ]
+  },
+  {
+    "id": "j2-erp-normalize",
+    "type": "function",
+    "z": "06159bb21ff3a699",
+    "name": "Normalize ERP OrderLine",
+    "func": "// Normalize ERP OrderLine -> /supos/J2_ERP_OrderLine\nvar p = msg.payload;\nif (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { node.warn('ERP bad JSON'); return null; } }\nif (!p || typeof p !== 'object') { return null; }\nif (p.business_key === undefined || p.order_line_ref === undefined || p.required_qty === undefined) {\n    node.warn('ERP missing required fields'); return null;\n}\nvar qty = parseFloat(p.required_qty);\nif (isNaN(qty)) { return null; }\nvar now = Date.now();\nmsg.payload = {\n    businessKey: String(p.business_key),\n    orderLineRef: String(p.order_line_ref),\n    requiredQty: qty,\n    dueAt: p.due_at !== undefined ? String(p.due_at) : '',\n    sourceTime: p.event_time !== undefined ? String(p.event_time) : '',\n    timeStamp: now,\n    quality: 0\n};\nmsg.topic = '/supos/J2_ERP_OrderLine';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 100,
+    "wires": [
+      [
+        "j2-erp-mqttout"
+      ]
+    ]
+  },
+  {
+    "id": "j2-erp-mqttout",
+    "type": "mqtt out",
+    "z": "06159bb21ff3a699",
+    "name": "CANONICAL ERP OUT",
+    "topic": "",
+    "qos": "2",
+    "retain": "",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "j2-release-broker",
+    "x": 680,
+    "y": 100,
+    "wires": []
+  },
+  {
+    "id": "j2-mes-mqttin",
+    "type": "mqtt in",
+    "z": "06159bb21ff3a699",
+    "name": "RAW MES IN",
+    "topic": "/source/j2/mes/production",
+    "qos": "2",
+    "datatype": "auto",
+    "broker": "j2-release-broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 180,
+    "y": 220,
+    "wires": [
+      [
+        "j2-mes-normalize"
+      ]
+    ]
+  },
+  {
+    "id": "j2-mes-normalize",
+    "type": "function",
+    "z": "06159bb21ff3a699",
+    "name": "Normalize MES Production",
+    "func": "// Normalize MES Production -> /supos/J2_MES_Production\nvar p = msg.payload;\nif (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { node.warn('MES bad JSON'); return null; } }\nif (!p || typeof p !== 'object') { return null; }\nif (p.business_key === undefined || p.production_order_ref === undefined ||\n    p.order_line_ref === undefined || p.production_lot_ref === undefined) {\n    node.warn('MES missing required fields'); return null;\n}\nvar qty = parseFloat(p.completed_qty);\nif (isNaN(qty)) { return null; }\nvar now = Date.now();\nmsg.payload = {\n    businessKey: String(p.business_key),\n    productionOrderRef: String(p.production_order_ref),\n    orderLineRef: String(p.order_line_ref),\n    productionLotRef: String(p.production_lot_ref),\n    completedQty: qty,\n    state: p.state !== undefined ? String(p.state) : '',\n    sourceTime: p.event_time !== undefined ? String(p.event_time) : '',\n    timeStamp: now,\n    quality: 0\n};\nmsg.topic = '/supos/J2_MES_Production';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 220,
+    "wires": [
+      [
+        "j2-mes-mqttout"
+      ]
+    ]
+  },
+  {
+    "id": "j2-mes-mqttout",
+    "type": "mqtt out",
+    "z": "06159bb21ff3a699",
+    "name": "CANONICAL MES OUT",
+    "topic": "",
+    "qos": "2",
+    "retain": "",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "j2-release-broker",
+    "x": 680,
+    "y": 220,
+    "wires": []
+  },
+  {
+    "id": "j2-qms-mqttin",
+    "type": "mqtt in",
+    "z": "06159bb21ff3a699",
+    "name": "RAW QMS IN",
+    "topic": "/source/j2/qms/quality",
+    "qos": "2",
+    "datatype": "auto",
+    "broker": "j2-release-broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 180,
+    "y": 340,
+    "wires": [
+      [
+        "j2-qms-normalize"
+      ]
+    ]
+  },
+  {
+    "id": "j2-qms-normalize",
+    "type": "function",
+    "z": "06159bb21ff3a699",
+    "name": "Normalize QMS Quality",
+    "func": "// Normalize QMS Quality -> /supos/J2_QMS_Quality\nvar p = msg.payload;\nif (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { node.warn('QMS bad JSON'); return null; } }\nif (!p || typeof p !== 'object') { return null; }\nif (p.business_key === undefined || p.quality_lot_ref === undefined || p.production_lot_ref === undefined) {\n    node.warn('QMS missing required fields'); return null;\n}\nvar qty = parseFloat(p.released_qty);\nif (isNaN(qty)) { return null; }\nvar now = Date.now();\nmsg.payload = {\n    businessKey: String(p.business_key),\n    qualityLotRef: String(p.quality_lot_ref),\n    productionLotRef: String(p.production_lot_ref),\n    releasedQty: qty,\n    sourceTime: p.event_time !== undefined ? String(p.event_time) : '',\n    timeStamp: now,\n    quality: 0\n};\nmsg.topic = '/supos/J2_QMS_Quality';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 340,
+    "wires": [
+      [
+        "j2-qms-mqttout"
+      ]
+    ]
+  },
+  {
+    "id": "j2-qms-mqttout",
+    "type": "mqtt out",
+    "z": "06159bb21ff3a699",
+    "name": "CANONICAL QMS OUT",
+    "topic": "",
+    "qos": "2",
+    "retain": "",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "j2-release-broker",
+    "x": 680,
+    "y": 340,
+    "wires": []
+  },
+  {
+    "id": "j2-wms-mqttin",
+    "type": "mqtt in",
+    "z": "06159bb21ff3a699",
+    "name": "RAW WMS IN",
+    "topic": "/source/j2/wms/shipment",
+    "qos": "2",
+    "datatype": "auto",
+    "broker": "j2-release-broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 180,
+    "y": 460,
+    "wires": [
+      [
+        "j2-wms-normalize"
+      ]
+    ]
+  },
+  {
+    "id": "j2-wms-normalize",
+    "type": "function",
+    "z": "06159bb21ff3a699",
+    "name": "Normalize WMS Shipment",
+    "func": "// Normalize WMS Shipment -> /supos/J2_WMS_Shipment\nvar p = msg.payload;\nif (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { node.warn('WMS bad JSON'); return null; } }\nif (!p || typeof p !== 'object') { return null; }\nif (p.business_key === undefined || p.shipment_line_ref === undefined || p.source_order_line_ref === undefined) {\n    node.warn('WMS missing required fields'); return null;\n}\nvar qty = parseFloat(p.execution_committed_qty);\nif (isNaN(qty)) { return null; }\nvar now = Date.now();\nmsg.payload = {\n    businessKey: String(p.business_key),\n    shipmentLineRef: String(p.shipment_line_ref),\n    sourceOrderLineRef: String(p.source_order_line_ref),\n    executionCommittedQty: qty,\n    sourceTime: p.event_time !== undefined ? String(p.event_time) : '',\n    timeStamp: now,\n    quality: 0\n};\nmsg.topic = '/supos/J2_WMS_Shipment';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 460,
+    "wires": [
+      [
+        "j2-wms-mqttout"
+      ]
+    ]
+  },
+  {
+    "id": "j2-wms-mqttout",
+    "type": "mqtt out",
+    "z": "06159bb21ff3a699",
+    "name": "CANONICAL WMS OUT",
+    "topic": "",
+    "qos": "2",
+    "retain": "",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "j2-release-broker",
+    "x": 680,
+    "y": 460,
+    "wires": []
+  },
+  {
+    "id": "j2-prog_erp-mqttin",
+    "type": "mqtt in",
+    "z": "06159bb21ff3a699",
+    "name": "RAW PROGRESS ERP IN",
+    "topic": "/source/j2/progress/erp",
+    "qos": "2",
+    "datatype": "auto",
+    "broker": "j2-release-broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 180,
+    "y": 580,
+    "wires": [
+      [
+        "j2-prog_erp-normalize"
+      ]
+    ]
+  },
+  {
+    "id": "j2-prog_erp-normalize",
+    "type": "function",
+    "z": "06159bb21ff3a699",
+    "name": "Normalize Progress ERP",
+    "func": "// Normalize ERP SourceProgress -> /supos/J2_SourceProgress\nvar p = msg.payload;\nif (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { node.warn('ERP progress bad JSON'); return null; } }\nif (!p || typeof p !== 'object') { return null; }\nif (p.business_key === undefined || p.event_type === undefined || p.source_progress_at === undefined) {\n    node.warn('ERP progress missing required fields'); return null;\n}\nvar now = Date.now();\nmsg.payload = {\n    businessKey: String(p.business_key),\n    sourceSystem: 'ERP',\n    eventType: String(p.event_type),\n    sourceProgressAt: String(p.source_progress_at),\n    sourceTime: p.event_time !== undefined ? String(p.event_time) : String(p.source_progress_at),\n    timeStamp: now,\n    quality: 0\n};\nmsg.topic = '/supos/J2_SourceProgress';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 580,
+    "wires": [
+      [
+        "j2-prog_erp-mqttout"
+      ]
+    ]
+  },
+  {
+    "id": "j2-prog_erp-mqttout",
+    "type": "mqtt out",
+    "z": "06159bb21ff3a699",
+    "name": "CANONICAL PROGRESS OUT",
+    "topic": "",
+    "qos": "2",
+    "retain": "",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "j2-release-broker",
+    "x": 680,
+    "y": 580,
+    "wires": []
+  },
+  {
+    "id": "j2-prog_mes-mqttin",
+    "type": "mqtt in",
+    "z": "06159bb21ff3a699",
+    "name": "RAW PROGRESS MES IN",
+    "topic": "/source/j2/progress/mes",
+    "qos": "2",
+    "datatype": "auto",
+    "broker": "j2-release-broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 180,
+    "y": 700,
+    "wires": [
+      [
+        "j2-prog_mes-normalize"
+      ]
+    ]
+  },
+  {
+    "id": "j2-prog_mes-normalize",
+    "type": "function",
+    "z": "06159bb21ff3a699",
+    "name": "Normalize Progress MES",
+    "func": "// Normalize MES SourceProgress -> /supos/J2_SourceProgress\nvar p = msg.payload;\nif (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { node.warn('MES progress bad JSON'); return null; } }\nif (!p || typeof p !== 'object') { return null; }\nif (p.business_key === undefined || p.event_type === undefined || p.source_progress_at === undefined) {\n    node.warn('MES progress missing required fields'); return null;\n}\nvar now = Date.now();\nmsg.payload = {\n    businessKey: String(p.business_key),\n    sourceSystem: 'MES',\n    eventType: String(p.event_type),\n    sourceProgressAt: String(p.source_progress_at),\n    sourceTime: p.event_time !== undefined ? String(p.event_time) : String(p.source_progress_at),\n    timeStamp: now,\n    quality: 0\n};\nmsg.topic = '/supos/J2_SourceProgress';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 700,
+    "wires": [
+      [
+        "j2-prog_mes-mqttout"
+      ]
+    ]
+  },
+  {
+    "id": "j2-prog_mes-mqttout",
+    "type": "mqtt out",
+    "z": "06159bb21ff3a699",
+    "name": "CANONICAL PROGRESS OUT",
+    "topic": "",
+    "qos": "2",
+    "retain": "",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "j2-release-broker",
+    "x": 680,
+    "y": 700,
+    "wires": []
+  },
+  {
+    "id": "j2-prog_qms-mqttin",
+    "type": "mqtt in",
+    "z": "06159bb21ff3a699",
+    "name": "RAW PROGRESS QMS IN",
+    "topic": "/source/j2/progress/qms",
+    "qos": "2",
+    "datatype": "auto",
+    "broker": "j2-release-broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 180,
+    "y": 820,
+    "wires": [
+      [
+        "j2-prog_qms-normalize"
+      ]
+    ]
+  },
+  {
+    "id": "j2-prog_qms-normalize",
+    "type": "function",
+    "z": "06159bb21ff3a699",
+    "name": "Normalize Progress QMS",
+    "func": "// Normalize QMS SourceProgress -> /supos/J2_SourceProgress\nvar p = msg.payload;\nif (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { node.warn('QMS progress bad JSON'); return null; } }\nif (!p || typeof p !== 'object') { return null; }\nif (p.business_key === undefined || p.event_type === undefined || p.source_progress_at === undefined) {\n    node.warn('QMS progress missing required fields'); return null;\n}\nvar now = Date.now();\nmsg.payload = {\n    businessKey: String(p.business_key),\n    sourceSystem: 'QMS',\n    eventType: String(p.event_type),\n    sourceProgressAt: String(p.source_progress_at),\n    sourceTime: p.event_time !== undefined ? String(p.event_time) : String(p.source_progress_at),\n    timeStamp: now,\n    quality: 0\n};\nmsg.topic = '/supos/J2_SourceProgress';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 820,
+    "wires": [
+      [
+        "j2-prog_qms-mqttout"
+      ]
+    ]
+  },
+  {
+    "id": "j2-prog_qms-mqttout",
+    "type": "mqtt out",
+    "z": "06159bb21ff3a699",
+    "name": "CANONICAL PROGRESS OUT",
+    "topic": "",
+    "qos": "2",
+    "retain": "",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "j2-release-broker",
+    "x": 680,
+    "y": 820,
+    "wires": []
+  },
+  {
+    "id": "j2-prog_wms-mqttin",
+    "type": "mqtt in",
+    "z": "06159bb21ff3a699",
+    "name": "RAW PROGRESS WMS IN",
+    "topic": "/source/j2/progress/wms",
+    "qos": "2",
+    "datatype": "auto",
+    "broker": "j2-release-broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 180,
+    "y": 940,
+    "wires": [
+      [
+        "j2-prog_wms-normalize"
+      ]
+    ]
+  },
+  {
+    "id": "j2-prog_wms-normalize",
+    "type": "function",
+    "z": "06159bb21ff3a699",
+    "name": "Normalize Progress WMS",
+    "func": "// Normalize WMS SourceProgress -> /supos/J2_SourceProgress\nvar p = msg.payload;\nif (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { node.warn('WMS progress bad JSON'); return null; } }\nif (!p || typeof p !== 'object') { return null; }\nif (p.business_key === undefined || p.event_type === undefined || p.source_progress_at === undefined) {\n    node.warn('WMS progress missing required fields'); return null;\n}\nvar now = Date.now();\nmsg.payload = {\n    businessKey: String(p.business_key),\n    sourceSystem: 'WMS',\n    eventType: String(p.event_type),\n    sourceProgressAt: String(p.source_progress_at),\n    sourceTime: p.event_time !== undefined ? String(p.event_time) : String(p.source_progress_at),\n    timeStamp: now,\n    quality: 0\n};\nmsg.topic = '/supos/J2_SourceProgress';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 940,
+    "wires": [
+      [
+        "j2-prog_wms-mqttout"
+      ]
+    ]
+  },
+  {
+    "id": "j2-prog_wms-mqttout",
+    "type": "mqtt out",
+    "z": "06159bb21ff3a699",
+    "name": "CANONICAL PROGRESS OUT",
+    "topic": "",
+    "qos": "2",
+    "retain": "",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "j2-release-broker",
+    "x": 680,
+    "y": 940,
+    "wires": []
+  },
+  {
+    "id": "j2-release-broker",
+    "type": "mqtt-broker",
+    "name": "Configure your demo EMQX",
+    "broker": "emqx",
+    "port": "1883",
+    "clientid": "",
+    "autoConnect": true,
+    "usetls": false,
+    "protocolVersion": "4",
+    "keepalive": "60",
+    "cleansession": true,
+    "autoUnsubscribe": true
+  }
+]

@@ -1,0 +1,56 @@
+{
+  "command": "docker compose -p fulfillment-sentinel-public-rc1 -f docker-compose.yml -f deploy/compose.open-supos.yml build app",
+  "dockerfileUnmodified": true,
+  "buildExitCode": 0,
+  "logSha256": "472995f46655d4c01d667ec37c49a7e644331545eb6f48374f4fd49cc624d1bb",
+  "logStorage": "unpublished local-evidence/final/docker-build.log",
+  "appImage": {
+    "tag": "fulfillment-sentinel-open-supos:public-rc1",
+    "id": "sha256:9b77f86bcb74d3619737dff371bad747aae92d060d6e9cda73a3bfcebfb2b62d",
+    "architecture": "amd64",
+    "os": "linux"
+  },
+  "stages": {
+    "npmCi": "Docker layer cache reused; preceding candidate-root npm ci also passed",
+    "npmRunBuild": "EXECUTED_PASS",
+    "npmRunDemoJudge": "EXECUTED_PASS",
+    "productionNpmCi": "Docker layer cache reused",
+    "imageExport": "PASS"
+  },
+  "base": {
+    "repository": "docker.io/library/node",
+    "referenceDigest": "sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20",
+    "manifestDigest": "sha256:51b1100cc2a83d370c6a60952e3f2989c8a43159d0e38586e090f3b3326efefd",
+    "configDigest": "sha256:470015c1ab1577c19efce2e80cdad4afd9c682cf8f4dcf3dccae5abfd9113397",
+    "os": "linux",
+    "architecture": "amd64",
+    "nodeVersion": [
+      "NODE_VERSION=24.21.0"
+    ],
+    "verifiedAgainstOfficialRegistry": true,
+    "cachedBaseLayers": 5,
+    "daemonProxyModified": false,
+    "loadedImageId": "sha256:3faed5aa8dc770b8134a81de7466a0780438f5008cad89edd62cb3bb3fc73eb0",
+    "dockerLoad": "PASS",
+    "loadSource": "official manifest confirmed via Docker Hub; cached containerd config/layers verified by digest",
+    "verifiedLayers": [
+      "sha256:7fd1ebe418b5079d4aa36f416af9b143d127bc75b0155d71cb5fd559b5e04d39",
+      "sha256:517d640e32835287653c4b15eb5d9f6bcf48e103baea4f7e29bac937002f649b",
+      "sha256:11ffcabe0f772f0f1a9c80b4b290b5ec0de54f11c671f0fa10e5844f9b52d17a",
+      "sha256:1a0cf4b1ffc8dd659bb8c6e90471bc8fec24620e4fdb68bb2b6faa56154ae146",
+      "sha256:08489011619dfda982191cb9cc0418dc48ea3b1341588aeef534e4db0ab4d3d0"
+    ],
+    "oldAppImageUsed": false
+  },
+  "httpHealth": {
+    "ok": true
+  },
+  "routes": [
+    "/ 200",
+    "/runtime 200",
+    "/validation 200"
+  ],
+  "browserOpenedClosedWorkbench": true,
+  "browserReloadVerified": false,
+  "liveAiCalled": false
+}

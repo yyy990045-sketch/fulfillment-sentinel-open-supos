@@ -1,0 +1,11 @@
+apiVersion: v4alpha1
+name: fulfillment-sentinel
+vendorName: yyy990045-sketch
+appVersion: V0.1.0
+showName: 履约哨兵
+description: 基于 open supOS UNS 的跨系统履约冲突处置演示应用。
+doc:
+icon: /statics/favicon.svg
+indexUrl: /apps/yyy990045-sketch-fulfillment-sentinel/
+type: normal
+deployMode: INSIDE

@@ -1,0 +1,6 @@
+# Keep lockfile hashes and original license bytes stable across Windows/Linux.
+package-lock.json text eol=lf
+docs/dependency-licenses.json text eol=lf
+LICENSE -text
+frontend/public/review-materials/LICENSE -text
+third_party/** -text

@@ -1,0 +1,164 @@
+{
+  "status": "PASS",
+  "simulatedIndustrialData": true,
+  "at": "2026-10-13T14:47:39.111Z",
+  "context": {
+    "composeProject": "fulfillment-sentinel-public-rc1",
+    "label": "fulfillment-sentinel-public-rc1",
+    "networks": [
+      "fulfillment-sentinel-public-rc1_default",
+      "supos_default_network"
+    ],
+    "appPort": 13415,
+    "platform": "http://backend:8080",
+    "mqtt": "mqtt://emqx:1883",
+    "nodeRed": "http://nodered:1880"
+  },
+  "steps": [
+    {
+      "name": "CONFLICT",
+      "http": 200,
+      "status": "FULFILLMENT_STATE_CONFLICT",
+      "facts": [
+        100,
+        96,
+        96,
+        100
+      ],
+      "watermark": "2026-03-01T07:00:00.000Z",
+      "events": [
+        {
+          "id": "j2-sp-e9059ab3a73cf438533c2b15",
+          "source": "WMS",
+          "sourceTime": "2026-03-01T07:00:00.000Z",
+          "canonicalTopic": "/supos/J2_SourceProgress",
+          "isSourceProgress": true
+        },
+        {
+          "id": "j2-sp-2d32c35976deb8ee52124469",
+          "source": "QMS",
+          "sourceTime": "2026-03-01T07:00:00.000Z",
+          "canonicalTopic": "/supos/J2_SourceProgress",
+          "isSourceProgress": true
+        },
+        {
+          "id": "j2-sp-50f3b53cc757313606b7f327",
+          "source": "MES",
+          "sourceTime": "2026-03-01T07:00:00.000Z",
+          "canonicalTopic": "/supos/J2_SourceProgress",
+          "isSourceProgress": true
+        },
+        {
+          "id": "j2-sp-2858c007418ad22d7c9c3285",
+          "source": "ERP",
+          "sourceTime": "2026-03-01T07:00:00.000Z",
+          "canonicalTopic": "/supos/J2_SourceProgress",
+          "isSourceProgress": true
+        },
+        {
+          "id": "j2-32e76aff2fa5426140239f2a",
+          "source": "WMS",
+          "sourceTime": "2026-03-01T05:50:00.000Z",
+          "canonicalTopic": "/supos/J2_WMS_Shipment",
+          "isSourceProgress": false
+        },
+        {
+          "id": "j2-1ee397bd6302c07a28ecbdd0",
+          "source": "QMS",
+          "sourceTime": "2026-03-01T05:45:00.000Z",
+          "canonicalTopic": "/supos/J2_QMS_Quality",
+          "isSourceProgress": false
+        },
+        {
+          "id": "j2-227469950476083d97b35a2b",
+          "source": "MES",
+          "sourceTime": "2026-03-01T05:30:00.000Z",
+          "canonicalTopic": "/supos/J2_MES_Production",
+          "isSourceProgress": false
+        },
+        {
+          "id": "j2-c5fcd4cd1d52a596eab408aa",
+          "source": "ERP",
+          "sourceTime": "2026-03-01T05:00:00.000Z",
+          "canonicalTopic": "/supos/J2_ERP_OrderLine",
+          "isSourceProgress": false
+        }
+      ]
+    },
+    {
+      "name": "HUMAN_CONFIRM",
+      "http": 200,
+      "status": "WAITING_FOR_EXECUTION_VERIFICATION",
+      "facts": [
+        100,
+        96,
+        96,
+        100
+      ],
+      "watermark": "2026-03-01T07:00:00.000Z"
+    },
+    {
+      "name": "WMS_RAW_TO_CLOSED",
+      "http": 200,
+      "status": "REVALIDATED_CLOSED",
+      "facts": [
+        100,
+        96,
+        96,
+        96
+      ],
+      "watermark": "2026-03-01T08:00:00.000Z",
+      "publishedRawTopics": [
+        "/source/j2/wms/shipment",
+        "/source/j2/progress/erp",
+        "/source/j2/progress/mes",
+        "/source/j2/progress/qms",
+        "/source/j2/progress/wms"
+      ],
+      "newEvents": [
+        {
+          "id": "j2-sp-a8004cbd23d72e09c18941db",
+          "source": "WMS",
+          "sourceTime": "2026-03-01T08:00:00.000Z",
+          "canonicalTopic": "/supos/J2_SourceProgress",
+          "isSourceProgress": true
+        },
+        {
+          "id": "j2-sp-a09f44b8fcc680975e874a19",
+          "source": "QMS",
+          "sourceTime": "2026-03-01T08:00:00.000Z",
+          "canonicalTopic": "/supos/J2_SourceProgress",
+          "isSourceProgress": true
+        },
+        {
+          "id": "j2-sp-f54fa088c5ca47411b3a7657",
+          "source": "MES",
+          "sourceTime": "2026-03-01T08:00:00.000Z",
+          "canonicalTopic": "/supos/J2_SourceProgress",
+          "isSourceProgress": true
+        },
+        {
+          "id": "j2-sp-c11747f27706bad84bc3ba10",
+          "source": "ERP",
+          "sourceTime": "2026-03-01T08:00:00.000Z",
+          "canonicalTopic": "/supos/J2_SourceProgress",
+          "isSourceProgress": true
+        },
+        {
+          "id": "j2-026005be7d0e0cc6830d9c3a",
+          "source": "WMS",
+          "sourceTime": "2026-03-01T05:50:00.000Z",
+          "canonicalTopic": "/supos/J2_WMS_Shipment",
+          "isSourceProgress": false
+        }
+      ]
+    }
+  ],
+  "platformUnsCurrent": {
+    "ERP": 100,
+    "WMS": 96
+  },
+  "remainingCustomerDemand": 4,
+  "aiOptional": "WARN",
+  "tsdbHistoryPersistenceVerified": false
+}

@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+!.env.example
+node_modules
+dist
+frontend/dist
+.preview
+artifacts
+images
+*.log
+docs
+submission
+.github

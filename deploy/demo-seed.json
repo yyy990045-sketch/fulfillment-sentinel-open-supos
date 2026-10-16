@@ -1,0 +1,80 @@
+[
+  {
+    "topic": "/source/j2/erp/order-line",
+    "payload": {
+      "business_key": "SO-IND-001",
+      "order_line_ref": "ERP:SO-IND-001:LINE-01",
+      "required_qty": 100,
+      "due_at": "2026-03-01T06:00:00.000Z",
+      "event_time": "2026-03-01T05:00:00.000Z"
+    }
+  },
+  {
+    "topic": "/source/j2/mes/production",
+    "payload": {
+      "business_key": "SO-IND-001",
+      "production_order_ref": "MES:WO-IND-001",
+      "order_line_ref": "ERP:SO-IND-001:LINE-01",
+      "production_lot_ref": "MES:LOT-IND-001",
+      "completed_qty": 96,
+      "state": "completed",
+      "event_time": "2026-03-01T05:30:00.000Z"
+    }
+  },
+  {
+    "topic": "/source/j2/qms/quality",
+    "payload": {
+      "business_key": "SO-IND-001",
+      "quality_lot_ref": "QMS:QI-IND-001",
+      "production_lot_ref": "MES:LOT-IND-001",
+      "released_qty": 96,
+      "event_time": "2026-03-01T05:45:00.000Z"
+    }
+  },
+  {
+    "topic": "/source/j2/wms/shipment",
+    "payload": {
+      "business_key": "SO-IND-001",
+      "shipment_line_ref": "WMS:SHIP-IND-001",
+      "source_order_line_ref": "ERP:SO-IND-001:LINE-01",
+      "execution_committed_qty": 100,
+      "event_time": "2026-03-01T05:50:00.000Z"
+    }
+  },
+  {
+    "topic": "/source/j2/progress/erp",
+    "payload": {
+      "business_key": "SO-IND-001",
+      "event_type": "SOURCE_PROGRESS",
+      "source_progress_at": "2026-03-01T07:00:00.000Z",
+      "event_time": "2026-03-01T07:00:00.000Z"
+    }
+  },
+  {
+    "topic": "/source/j2/progress/mes",
+    "payload": {
+      "business_key": "SO-IND-001",
+      "event_type": "SOURCE_PROGRESS",
+      "source_progress_at": "2026-03-01T07:00:00.000Z",
+      "event_time": "2026-03-01T07:00:00.000Z"
+    }
+  },
+  {
+    "topic": "/source/j2/progress/qms",
+    "payload": {
+      "business_key": "SO-IND-001",
+      "event_type": "SOURCE_PROGRESS",
+      "source_progress_at": "2026-03-01T07:00:00.000Z",
+      "event_time": "2026-03-01T07:00:00.000Z"
+    }
+  },
+  {
+    "topic": "/source/j2/progress/wms",
+    "payload": {
+      "business_key": "SO-IND-001",
+      "event_type": "SOURCE_PROGRESS",
+      "source_progress_at": "2026-03-01T07:00:00.000Z",
+      "event_time": "2026-03-01T07:00:00.000Z"
+    }
+  }
+]

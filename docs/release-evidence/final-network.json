@@ -1,0 +1,33 @@
+{
+  "host": {
+    "dns": "resolved registry/auth endpoints",
+    "registryDirectHttp": 401,
+    "authDirectHttp": 200,
+    "initialAuthDirectTimeout": true
+  },
+  "daemon": {
+    "systemdDropIn": "docker.service.d/proxy.conf",
+    "configuredProxyTcp": "TIMEOUT",
+    "registryThroughDaemonConfiguredProxy": "CONNECT_TIMEOUT",
+    "authThroughDaemonConfiguredProxy": "CONNECT_TIMEOUT",
+    "credentialsPrinted": false
+  },
+  "buildkit": {
+    "driver": "docker",
+    "version": "0.26.2",
+    "networkFailureStage": "FROM metadata through daemon proxy",
+    "independentBuildkitFailureProven": false,
+    "officialBaseLayersCached": 5
+  },
+  "dockerHub": {
+    "officialManifestAndConfigRetrievedDirectly": true,
+    "globalHubOutageProven": false
+  },
+  "recovery": {
+    "method": "Re-expose verified official Node cached base as a local image via docker load, then original Dockerfile build",
+    "globalProxyModified": false,
+    "daemonRestartRequestedOrPerformed": false,
+    "dockerDesktopModified": false,
+    "futureUncachedPullRequiresWorkingNetwork": true
+  }
+}

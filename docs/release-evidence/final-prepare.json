@@ -1,0 +1,57 @@
+{
+  "status": "PASS",
+  "context": {
+    "composeProject": "fulfillment-sentinel-public-rc1",
+    "label": "fulfillment-sentinel-public-rc1",
+    "networks": [
+      "fulfillment-sentinel-public-rc1_default",
+      "supos_default_network"
+    ],
+    "appPort": 13415,
+    "platform": "http://backend:8080",
+    "mqtt": "mqtt://emqx:1883",
+    "nodeRed": "http://nodered:1880"
+  },
+  "priorCase": {
+    "initialized": false,
+    "http": 503
+  },
+  "seeded": {
+    "published": 8,
+    "status": "FULFILLMENT_STATE_CONFLICT",
+    "facts": [
+      100,
+      96,
+      96,
+      100
+    ],
+    "watermark": "2026-03-01T07:00:00.000Z",
+    "eventCount": 8
+  },
+  "case": {
+    "initialized": true,
+    "id": "SO-IND-001",
+    "status": "FULFILLMENT_STATE_CONFLICT",
+    "facts": {
+      "ERP": 100,
+      "MES": 96,
+      "QMS": 96,
+      "WMS": 100
+    },
+    "watermark": "2026-03-01T07:00:00.000Z",
+    "sourceProgress": {
+      "ERP": "2026-03-01T07:00:00.000Z",
+      "MES": "2026-03-01T07:00:00.000Z",
+      "QMS": "2026-03-01T07:00:00.000Z",
+      "WMS": "2026-03-01T07:00:00.000Z"
+    },
+    "eventCount": 8
+  },
+  "unsCurrent": {
+    "ERP": 100,
+    "MES": 96,
+    "QMS": 96,
+    "WMS": 100,
+    "progress": "2026-03-01T07:00:00.000Z"
+  }
+}

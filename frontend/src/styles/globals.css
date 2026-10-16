@@ -1,0 +1,388 @@
+@import "tailwindcss";
+
+/* Observed bilingual extension inserts mistranslations into technical labels.
+   Preserve authored UI and reference fields without changing browser settings. */
+#root .duo-translation, #root .duo-divide { display: none !important; }
+
+/* ============================================================================
+ * UI-R10 · INDUSTRIAL PRODUCT SYSTEM
+ * 单一视觉系统。所有字号、间距、表面、阴影、画布高度必须来自此处 token，
+ * 组件里禁止再出现裸 text-[NNpx] / 裸 hex / 重复的画布高度覆盖。
+ * ==========================================================================*/
+
+:root {
+  /* ---- 品牌与语义色（暖白底 + 深绿品牌 + 暖橙风险，保持不变）---- */
+  --background: #f8f8f3;
+  --foreground: #223a32;
+  --primary: #205947;
+  --primary-foreground: #ffffff;
+  --secondary: #edf1e9;
+  --muted: #e8ede5;
+  --muted-foreground: #768579;
+  --border: #dfe5dc;
+  --ring: #4c9273;
+  --risk: #ac5b3d;
+  --risk-soft: #f8eee5;
+  --success: #438462;
+  --radius: .6rem;
+  --font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+
+  /* ---- UI-R10 新增：工业层级色阶（比 muted 更沉的底，用于镶板/画布）---- */
+  --surface-sunken: #f1f2ea;
+  /* ---- UI-R10.1：网格透明度降约 35%，从「方格纸」退成若有若无的工程基准面 ---- */
+  --grid-line: #223a3209;
+  --grid-line-strong: #223a320f;
+  --rule: #223a3214;
+  --ink-soft: #3c5548;
+  --risk-ink: #8f4526;
+
+  /* ==========================================================================
+   * 5 层文字层级 —— UI-R10 唯一排版权威
+   * L1 当前结论（页面第一结论句 / 冲突总量 / Gate 结果）
+   * L2 当前业务对象（订单号 / 模型名 / 页名）
+   * L3 关键事实（来源数量 100 / 96 / +4）
+   * L4 来源 · 状态（阶段名 / PASS / 部门 / 时间）
+   * L5 technical metadata（topic / ref / id / 字段名）
+   * ========================================================================*/
+  --type-l1: 2.25rem;    /* 36px */
+  --type-l1-lh: 1.05;
+  --type-l1-weight: 600;
+  --type-l2: 1.5rem;     /* 24px */
+  --type-l2-lh: 1.15;
+  --type-l2-weight: 600;
+  --type-l3: 1.125rem;   /* 18px */
+  --type-l3-lh: 1.3;
+  --type-l3-weight: 500;
+  --type-l4: .875rem;    /* 14px */
+  --type-l4-lh: 1.45;
+  --type-l4-weight: 500;
+  --type-l5: .75rem;     /* 12px */
+  --type-l5-lh: 1.4;
+  --type-l5-weight: 400;
+
+  /* ---- 空间节奏（4 的倍数，统一坑距）---- */
+  --space-canvas-gap: 1.25rem;
+  --space-block: 1.75rem;
+  --space-panel: 1.25rem;
+
+  /* ---- 画布高度（唯一权威定义，review-mode 只做比例微调）---- */
+  --scene-workbench: clamp(560px, calc(100vh - 310px), 800px);
+  --scene-runtime: clamp(430px, calc(100vh - 450px), 650px);
+  --scene-trace: clamp(345px, calc(100vh - 555px), 560px);
+  --scene-semantic: clamp(656px, calc(100vh - 250px), 840px);
+  --scene-flow: clamp(588px, calc(100vh - 290px), 800px);
+  /* UI-R10.1：验证中心画布从 580 收到 512，把垂直空间让给「逐级决策」闸口轨，
+     保证 5 个 Gate 与「判断在此停止」在 1440×900 内完整可见。 */
+  --scene-lab: 512px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-risk: var(--risk);
+  --color-risk-soft: var(--risk-soft);
+  --color-success: var(--success);
+  --color-sunken: var(--surface-sunken);
+  --color-ink-soft: var(--ink-soft);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --shadow-soft: 0 12px 32px #173b2c0d;
+
+  /* 5 层排版同步进 Tailwind，使 text-l1 … text-l5 可直接使用 */
+  --text-l1: var(--type-l1);
+  --text-l1--line-height: var(--type-l1-lh);
+  --text-l2: var(--type-l2);
+  --text-l2--line-height: var(--type-l2-lh);
+  --text-l3: var(--type-l3);
+  --text-l3--line-height: var(--type-l3-lh);
+  --text-l4: var(--type-l4);
+  --text-l4--line-height: var(--type-l4-lh);
+  --text-l5: var(--type-l5);
+  --text-l5--line-height: var(--type-l5-lh);
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply m-0 min-w-[320px] bg-background text-foreground antialiased; font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+  button, input, textarea { font: inherit; }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  button:not(:disabled), a { cursor: pointer; }
+  a { text-decoration: none; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+  ::selection { background: #cfe6d6; }
+}
+
+/* ============================================================================
+ * 5 层文字层级工具类 —— 页面里只用这些，不再写裸字号
+ * 用 @layer components 会输给 Tailwind utilities，所以放在 utilities 之后显式声明优先级。
+ * ==========================================================================*/
+@layer components {
+  .t-l1, .t-l2, .t-l3, .t-l4, .t-l5, .t-fact, .t-fact-lg, .t-meta { font-family: var(--font-sans); }
+}
+.t-l1 { font-size: var(--type-l1); line-height: var(--type-l1-lh); font-weight: var(--type-l1-weight); letter-spacing: -.02em; }
+.t-l2 { font-size: var(--type-l2); line-height: var(--type-l2-lh); font-weight: var(--type-l2-weight); }
+.t-l3 { font-size: var(--type-l3); line-height: var(--type-l3-lh); font-weight: var(--type-l3-weight); }
+.t-l4 { font-size: var(--type-l4); line-height: var(--type-l4-lh); font-weight: var(--type-l4-weight); }
+.t-l5 { font-size: var(--type-l5); line-height: var(--type-l5-lh); font-weight: var(--type-l5-weight); }
+
+/* 大号事实数字（L3 的量级放大形态）—— 用于 100 / 96 / +4 这类唯一事实 */
+.t-fact { font-size: 3.25rem; line-height: .92; font-weight: 500; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.t-fact-lg { font-size: 3.75rem; line-height: .9; font-weight: 500; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+/* UI-R10.1：工作台结论句 —— 比 t-l1 小约 12%，让位给 96 / +4 / 100 */
+.t-l1-editorial { font-size: 1.95rem; line-height: 1.14; font-weight: 500; letter-spacing: -.015em; }
+/* UI-R10.1：主场景四条事实数字 —— 页面绝对第一视觉，比 t-fact-lg 再大一档 */
+.t-fact-hero { font-size: 4.5rem; line-height: .88; font-weight: 500; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.t-gap-hero { font-size: 6.5rem; line-height: .84; font-weight: 500; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+
+/* L5 技术元数据统一外观：等宽 + 更淡 */
+.t-meta { font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Menlo", monospace; font-size: var(--type-l5); line-height: var(--type-l5-lh); color: var(--muted-foreground); }
+
+/* 排版层级工具类与 Tailwind 的 text-sm/text-xs 同时出现时，以层级为准 */
+.t-l1 { color: inherit; }
+.t-l4.font-normal, .t-l5.font-normal { font-weight: 400; }
+.t-l1.font-semibold, .t-l2.font-semibold { font-weight: 600; }
+
+@layer components {
+  .surface-panel { border-radius: 12px; border: 1px solid var(--border); background: #ffffff; box-shadow: 0 1px 2px #173b2c08; }
+  .surface-inset { border-radius: 10px; background: var(--surface-sunken); border: 1px solid var(--rule); }
+  .surface-plate {
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff, #f4f5ee);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 0 #ffffff inset, 0 10px 24px -14px #173b2c2e;
+  }
+
+  /* ---- 工程网格底：工业软件的空间感来源，替代纯白底 ---- */
+  .industrial-grid {
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .industrial-grid-fine {
+    background-image:
+      linear-gradient(to right, var(--grid-line-strong) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line-strong) 1px, transparent 1px);
+    background-size: 96px 96px;
+  }
+
+  /* 规则线：替代卡片边框，做工程图式分隔 */
+  .rule-x { border-top: 1px solid var(--rule); }
+  .rule-y { border-left: 1px solid var(--rule); }
+
+  /* 标签：工业铭牌式尖角小签 */
+  .plate-tag {
+    display: inline-flex; align-items: center; gap: .375rem;
+    padding: .125rem .5rem; border-radius: 3px;
+    background: var(--surface-sunken); border: 1px solid var(--rule);
+    font-size: var(--type-l5); font-weight: 500; letter-spacing: .01em;
+    color: var(--ink-soft);
+  }
+}
+
+@keyframes sheet-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* ============================================================================
+ * 空间画布 —— 高度只在 :root token 里定义一次
+ * ==========================================================================*/
+.desktop-space { width: 100%; max-width: 2160px; margin: 0 auto; padding-left: clamp(28px, 3vw, 64px); padding-right: clamp(28px, 3vw, 64px); }
+.product-header, .review-rail { width: 100%; max-width: 2160px !important; padding-left: clamp(28px, 3vw, 64px) !important; padding-right: clamp(28px, 3vw, 64px) !important; }
+.spatial-scene { position: relative; width: 100%; height: var(--scene-workbench); isolation: isolate; }
+.spatial-scene canvas { display: block; width: 100%; height: 100%; }
+
+.work-scene { height: var(--scene-workbench); margin-top: 0; }
+.work-action { position: absolute; transform: translateX(-50%); width: clamp(340px, 24vw, 430px); }
+.work-action:has([data-copilot-source] h2) { top: 12% !important; }
+.work-action [data-copilot-source] .grid { grid-template-columns: 1fr; gap: .5rem; }
+.runtime-scene { height: var(--scene-runtime); }
+.runtime-traced { height: var(--scene-trace); }
+.semantic-scene { height: var(--scene-semantic); }
+.flow-scene { height: var(--scene-flow); }
+.lab-scene { height: var(--scene-lab); margin-top: 0; }
+.validation-gates { margin-top: 24px; background: var(--surface-sunken); border-radius: 16px; }
+.validation-gates .gate-tunnel { padding: 24px 28px 28px; }
+.validation-gates .gate-tunnel h2 { font-size: 18px; }
+.validation-gates .gate-tunnel .t-l2 { font-size: 30px; }
+.validation-gates .gate-tunnel li[data-state=active][data-tone=block] { background: #ac5b3d0b; }
+.lab-scene { height: clamp(440px, calc(100vh - 450px), 650px); }
+
+/* ---- 画布内的工程基准面：网格 + 暗角，替代「模型放在白底上」 ---- */
+.scene-baseplane {
+  pointer-events: none; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  -webkit-mask-image: radial-gradient(ellipse 78% 72% at 50% 58%, #000 42%, transparent 96%);
+  mask-image: radial-gradient(ellipse 78% 72% at 50% 58%, #000 42%, transparent 96%);
+  z-index: -2;
+}
+.scene-vignette {
+  pointer-events: none; position: absolute; inset: 0; z-index: -1;
+  background:
+    radial-gradient(ellipse 62% 54% at 50% 56%, #ffffffcc, transparent 72%),
+    radial-gradient(ellipse 120% 90% at 50% 118%, #173b2c0f, transparent 60%);
+}
+.scene-object-label { position: absolute; transform: translateX(-50%); min-width: 168px; border-radius: 8px; }
+.scene-object-label strong { display: block; }
+/* UI-R10.1：UNS 根对象（OrderLine）加一条左侧竖标，让层级起点一眼可辨 */
+.scene-uns-root { border-left: 2px solid var(--primary); padding-left: 8px; margin-left: -8px; }
+.object-hit { position: absolute; left: 50%; bottom: 100%; width: 150px; height: 105px; transform: translateX(-50%); }
+.scene-object-label:hover:not(:has(.text-risk)) strong { color: var(--primary); }
+.scene-object-label:focus-visible { outline-offset: 10px; }
+.scene-horizon {
+  pointer-events: none; position: absolute; inset: 8% 0 4%; z-index: -1;
+  background:
+    radial-gradient(ellipse 30% 34% at 84% 39%, #ac5b3d12, transparent 68%),
+    radial-gradient(ellipse 44% 40% at 34% 38%, #2059470e, transparent 70%);
+}
+.runtime-atmosphere { pointer-events: none; position: absolute; inset: -2% 11% 0 28%; background: radial-gradient(ellipse at center, #cbdcc40f, transparent 68%); z-index: -1; }
+
+/* ============================================================================
+ * 顶部产品壳（三空间导航）
+ * ==========================================================================*/
+.runtime-tabs { width: fit-content; border: 0; gap: 6px; margin-left: 16px; border-radius: 999px; background: var(--surface-sunken); padding: 4px; }
+.runtime-tabs button { border: 0; border-radius: 999px; padding: 7px 16px; font-size: var(--type-l4); }
+.runtime-tabs button[data-state=active] { background: #ffffff; box-shadow: 0 1px 2px #173b2c14; }
+.queue-entry { border-radius: 999px; background: var(--surface-sunken); font-size: var(--type-l4); }
+
+/* ============================================================================
+ * 事件轨道 / 转换轨迹 / Gate 隧道
+ * ==========================================================================*/
+.event-rail { display: flex; align-items: center; min-height: 88px; padding: 10px 20px; border-radius: 14px; background: var(--surface-sunken); border: 1px solid var(--rule); }
+.runtime-source-label strong { font-size: 16px; line-height: 20px; }
+.runtime-source-label span { margin-top: 2px; line-height: 16px; }
+.rail-history { position: relative; }
+.rail-history:before { content: ''; position: absolute; height: 1px; width: 140px; background: var(--rule); top: 4px; left: 12px; }
+
+.transformation-trace { padding: 16px 20px; background: var(--surface-sunken); border: 1px solid var(--rule); border-radius: 14px; margin-bottom: 12px; }
+.transformation-trace { padding: 12px 20px; }
+.transformation-trace p { font-size: 12px; }
+
+/* ---- UI-R10.1 · Source Flow 字段变换族 ----
+ * 3D 图标降权后，真正承担视觉权重的是字段本身：
+ *   fmap-raw       原始字段（mono，灰，小）
+ *   fmap-arrow     变换箭头（细线 + 尖）
+ *   fmap-mid       中间态字段（PARSE / NORMALIZE 阶段）
+ *   fmap-canonical canonical 字段（mono，绿，加重）—— 第一视觉
+ */
+.fmap-raw { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .875rem; line-height: 1.35; color: var(--muted-foreground); }
+.fmap-arrow { display: block; position: relative; width: 22px; height: 9px; margin: 3px 0; }
+.fmap-arrow::before { content: ""; position: absolute; left: 0; top: 4px; width: 15px; height: 1px; background: var(--primary); opacity: .38; }
+.fmap-arrow::after { content: ""; position: absolute; left: 13px; top: 1.5px; width: 5px; height: 5px; border-right: 1px solid var(--primary); border-bottom: 1px solid var(--primary); transform: rotate(-45deg); opacity: .55; }
+.fmap-mid { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9375rem; line-height: 1.3; color: var(--foreground); }
+.fmap-canonical { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1rem; line-height: 1.35; font-weight: 600; color: var(--primary); letter-spacing: -.01em; }
+.scene-flow-stage h2 { letter-spacing: .01em; }
+
+/* Gate Tunnel：UI-R10.1 改「逐级决策」——主轨在阻断点截断，其后闸口退场 */
+.gate-tunnel { position: relative; padding: 20px 22px 18px; }
+.gate-tunnel ol { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; position: relative; }
+.gate-tunnel-track {
+  position: absolute; left: 6%; height: 2px; top: 26px;
+  background: repeating-linear-gradient(to right, var(--grid-line-strong) 0 6px, transparent 6px 12px);
+  /* 默认铺满；data-stop 由内联/属性驱动视觉截断 */
+  right: 6%;
+}
+.gate-tunnel-track[data-stop="0"] { right: 86%; background: var(--primary); }
+.gate-tunnel-track[data-stop="1"] { right: 70%; }
+.gate-tunnel-track[data-stop="2"] { right: 54%; }
+.gate-tunnel-track[data-stop="3"] { right: 38%; }
+.gate-tunnel-track[data-stop="4"] { right: 6%; }
+.gate-tunnel li { position: relative; }
+.gate-tunnel li:not(:last-child)::after { content: ""; position: absolute; top: 7px; right: -16px; width: 8px; height: 8px; border-right: 1.5px solid #20594745; border-bottom: 1.5px solid #20594745; transform: rotate(-45deg); }
+.gate-tunnel li[data-state=active]::before {
+  content: ""; position: absolute; left: -10px; top: 0; bottom: -6px; width: 2px; background: var(--primary); border-radius: 2px;
+}
+.gate-tunnel li[data-state=active] { background: #20594708; border-radius: 8px; padding: 8px 10px 10px; margin: -8px -10px -10px; }
+
+/* 闸口状态点：通过=实心绿；阻断=实心红方；等待=空心；其后=极淡空心 */
+.gate-dot { width: 9px; height: 9px; border-radius: 9999px; flex: none; }
+.gate-dot[data-tone="pass"] { background: var(--primary); }
+.gate-dot[data-tone="block"] { background: var(--risk); border-radius: 2px; }
+.gate-dot[data-tone="wait"] { background: transparent; border: 1.5px solid var(--muted-foreground); }
+.gate-dot[data-tone="after"] { background: transparent; border: 1.5px solid var(--muted-foreground); opacity: .4; }
+
+/* 阻断标记：一道竖向短杠，明确「判断在此停止」 */
+.gate-stop-flag { display: inline-block; width: 2px; height: 11px; border-radius: 2px; background: currentColor; }
+
+/* 保留旧类名，避免遗漏引用（等价于 gate-tunnel） */
+.gate-rail { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; padding: 20px 22px; background: var(--surface-sunken); border: 1px solid var(--rule); border-radius: 14px; }
+.gate-rail li { position: relative; }
+.gate-rail li:not(:last-child)::after { content: "→"; position: absolute; top: 7px; right: -20px; color: #20594745; }
+
+/* ============================================================================
+ * Review Mode —— 只做降权与强调，不改变产品布局语义
+ * ==========================================================================*/
+.review-mode .work-scene { height: calc(var(--scene-workbench) - 22px); }
+.review-mode .runtime-scene { height: calc(var(--scene-runtime) - 26px); }
+.review-mode .runtime-traced { height: calc(var(--scene-trace) - 24px); }
+.review-mode .semantic-scene { height: calc(var(--scene-semantic) - 26px); }
+.review-mode .review-rail { background: var(--surface-sunken); border-bottom: 1px solid var(--rule); }
+.review-mode .event-rail { min-height: 92px; }
+.review-mode .work-scene:has([data-copilot-source] h2) { height: calc(var(--scene-workbench) - 96px); }
+
+/* ---- Runtime 平台三层标签：右侧对齐收进左侧空白带，引线指向平台层 ---- */
+.runtime-layer-label {
+  left: 0; width: 236px; text-align: right;
+  transform: translateY(-50%);
+}
+.runtime-layer-leader {
+  left: 0; width: 46px; border-top: 1px dashed var(--grid-line-strong);
+  transform: translateY(-50%);
+}
+.runtime-layer-leader::after {
+  content: ""; position: absolute; right: -1px; top: -3px;
+  width: 5px; height: 5px; border-radius: 9999px; background: var(--primary); opacity: .5;
+}
+
+/* ---- 四步叙事：UI-R10.1 去 onboarding 卡片感 → 轻量连续 story rail ---- */
+.review-step {
+  position: relative;
+  display: flex; align-items: center; gap: .5rem;
+  padding: .25rem .5rem .4rem; border-radius: 6px;
+  border: 0; background: transparent;
+  color: var(--muted-foreground);
+  transition: color .18s ease;
+}
+.review-step:disabled { opacity: .4; }
+.review-step-index {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--type-l5); line-height: 1.1;
+  color: var(--muted-foreground); opacity: .6;
+}
+.review-step-label { font-size: var(--type-l4); line-height: 1.25; font-weight: 500; }
+.review-step-hint { font-size: var(--type-l5); line-height: 1.3; opacity: .5; }
+/* 进度条：贴着每个 step 底部，已走过的步实心 —— 用"进度"替代"白卡"表达当前 */
+.review-step::after {
+  content: ""; position: absolute; left: .5rem; right: .5rem; bottom: 0;
+  height: 2px; border-radius: 2px; background: transparent;
+}
+.review-step[data-state="current"] { color: var(--primary); }
+.review-step[data-state="current"] .review-step-index { color: var(--primary); opacity: 1; font-weight: 600; }
+.review-step[data-state="current"] .review-step-label { font-weight: 650; }
+.review-step[data-state="current"] .review-step-hint { opacity: .78; }
+.review-step[data-state="current"]::after { background: var(--primary); }
+.review-step[data-state="done"] { color: var(--ink-soft); }
+.review-step[data-state="done"] .review-step-hint { opacity: .42; }
+.review-step[data-state="done"]::after { background: #20594740; }
+/* step 之间的连接段：细虚线，弱到只提示"顺序"，不构成卡片边界 */
+.review-rail-link { width: 18px; height: 1px; flex: none; background: repeating-linear-gradient(to right, #20594735 0 3px, transparent 3px 6px); }
+
+/* ---- Competition Evidence Sheet：UI-R10.1-FIX2 纵向压缩 ----
+ * 只压缩行距与分区间距，不改结构、不改文案顺序。
+ * 目的：让「项目资料」的真实入口在 1440×900 首屏可见。 */
+.evidence-section + .evidence-section { margin-top: .95rem; padding-top: .95rem; border-top: 1px solid var(--rule); }
+.evidence-link { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: .75rem; padding: .2rem 0; line-height: 1.35; }
+.evidence-link:hover { color: var(--primary); }

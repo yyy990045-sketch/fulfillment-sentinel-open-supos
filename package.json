@@ -1,0 +1,50 @@
+{
+  "name": "fulfillment-sentinel-open-supos",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "履约哨兵：基于 open supOS UNS 的跨系统生产履约状态冲突处置 APP",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "demo": "tsx src/public/server.ts",
+    "demo:judge": "tsx src/demo/judge/cli.ts --ai deterministic",
+    "demo:preflight": "node scripts/demo-delivery.mjs preflight",
+    "demo:prepare": "node scripts/demo-delivery.mjs prepare",
+    "demo:verify": "node scripts/demo-delivery.mjs verify",
+    "open-supos:verify": "tsx src/integrations/open-supos/canonical-live-verify.ts",
+    "open-supos:verify:lineage-negative": "tsx src/integrations/open-supos/canonical-live-lineage-negative-verify.ts",
+    "build:backend": "tsc -p tsconfig.public.json",
+    "build:frontend": "vite build --config frontend/vite.config.ts",
+    "typecheck:frontend": "tsc --noEmit -p tsconfig.frontend.public.json",
+    "build": "npm run build:frontend && npm run build:backend && npm run typecheck:frontend",
+    "start": "node dist/src/public/server.js"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.103.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "motion": "^14.0.0",
+    "mqtt": "^5.16.0",
+    "radix-ui": "^1.7.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4",
+    "tailwind-merge": "^3.7.0",
+    "three": "0.186.1",
+    "tsx": "^4.20.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "0.186.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6"
+  },
+  "license": "Apache-2.0"
+}
