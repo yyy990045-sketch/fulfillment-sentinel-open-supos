@@ -1,0 +1,42 @@
+[
+  {
+    "name": "工作台风险、决策摘要与授权回读对照首屏",
+    "pass": true
+  },
+  {
+    "name": "备注写入当前页面、AI展开、依据Sheet及演示来源标识",
+    "pass": true
+  },
+  {
+    "name": "确认方案后WAITING，WMS保持100且授权回读对照同步",
+    "pass": true
+  },
+  {
+    "name": "浏览器WMS96经真实平台后关闭，历史WMS100保留且不回退当前值",
+    "pass": true
+  },
+  {
+    "name": "刷新后服务端CLOSED与历史100→96对照仍一致",
+    "pass": true
+  },
+  {
+    "name": "四个订单切换及预置案例来源标识",
+    "pass": true
+  },
+  {
+    "name": "四个验证场景停止边界、播放完成及点击对应Gate依据",
+    "pass": true
+  },
+  {
+    "name": "UNS发运行Inspector、四来源×两路径及字段阶段详情",
+    "pass": true
+  },
+  {
+    "name": "减少动态效果回放即时完成；三轮路由切换后仅一个canvas",
+    "pass": true
+  },
+  {
+    "name": "最终镜像1440×900首屏无滚动，键盘确认和平台正向闭环再次通过",
+    "pass": true
+  }
+]

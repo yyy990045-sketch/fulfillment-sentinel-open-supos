@@ -4,7 +4,7 @@
 
 用于 2026 上海开源软件应用创新大赛 open supOS 工业 App 开发方向。项目仓库：[https://github.com/yyy990045-sketch/fulfillment-sentinel-open-supos](https://github.com/yyy990045-sketch/fulfillment-sentinel-open-supos)。
 
-**版本范围：** 本仓库发布的是 2026-10-13 已完成 Docker Compose 验收的正式候选。它不包含后续本地 M1 Stage A / Stage B 的可信来源及单实例持久化增强；请勿将这些后续能力视为本仓库已交付。业务代码、Judge、UNS、Flow 与已验收候选保持一致。
+**版本范围：** 本分支是 2026-10-16 可见闭环展示修订版，以 2026-10-13 已验收 Docker Compose 候选为基础，改进工作台依据与执行对照、事件回放和验证场景交互。已重新构建并完成隔离平台真实闭环与浏览器检查，见[本次修订验收](docs/visible-workflow-validation.md)。服务端业务代码、Judge、UNS、Flow、Docker 部署和依赖保持不变；不包含后续本地 M1 Stage A / Stage B 的可信来源及单实例持久化增强。
 
 **主案例：** 客户要 100 件，生产完成 96 件、质量放行 96 件，仓库计划执行 100 件。系统识别超出可放行数量的 **4 件**。
 人工确认内部按 96 件处置，**不改变仓库事实**；只有新 WMS96 来源事件经过 open supOS 并通过重新验证，内部冲突才能关闭。客户订单仍为 100 件，剩余 4 件需求保留。

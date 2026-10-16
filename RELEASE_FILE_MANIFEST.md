@@ -1,7 +1,7 @@
 # RELEASE_FILE_MANIFEST
 
-日期：2026-10-16。基线为2026-10-13已审计候选；本次仅更新公开文档，未导入旧Git历史。
-发行文件共 **486** 个。清单覆盖隐藏模板及保留的第三方许可；本文件不对自身哈希。
+日期：2026-10-16。可见闭环展示修订；后端、Judge、UNS、Flow与部署保留已验收候选。
+发行文件共 **488** 个；本文件不对自身哈希。
 
 | 文件 | 字节 | SHA-256 |
 | --- | ---: | --- |
@@ -58,11 +58,13 @@
 | `docs/release-evidence/public-release-scan.json` | 192 | `b918be298348f083ec0fa6967245afa2eaf459e921bf245f801ea5c091db1b45` |
 | `docs/release-evidence/r2-source-match.json` | 32656 | `795e0f5adedcb31b772c40d539134f73a8eb636940c50cf738b6f5b2eaaa65b4` |
 | `docs/release-evidence/validation-summary.json` | 3196 | `53118eef79bf52595b14b712cabf37ac5a16db925c98e68679d1c11d6d9508d6` |
+| `docs/release-evidence/visible-workflow-browser-checks.json` | 1088 | `b775b04dd14d009337e405aa0ee35a10e9ac2cf59aad26529595609285698a4b` |
 | `docs/release-validation.md` | 6148 | `dc11f5b18bf63450fb2923726e30c4f2095f39ab1f6c7af86f606ba11fb55e6f` |
 | `docs/reproduction.md` | 301 | `7742ff201f368ee9b05a384b42ca19265f40b3bdbfa165904fd01d723b1b8ffa` |
 | `docs/runtime-proof.md` | 1732 | `0fbd09416880db0ee528d1d43fe3f1b4ec797787aeeaebd510412cdf6ea3617f` |
 | `docs/UNS-BOOTSTRAP.md` | 3346 | `550395241fec4119e9985288c480fdb5024704e78bc2075878df51e3fcbf15bb` |
 | `docs/UNS.md` | 2472 | `25243f725808d398c1827116f41a6a34c7383becaa85a03f6d1de0e65494f94b` |
+| `docs/visible-workflow-validation.md` | 3512 | `cf50b741875d43c566c151d643562c3dfe3deac8ffea4b3bbd3d1e17eebc5b82` |
 | `frontend/index.html` | 482 | `4e02ade34d6bdb303aea2f2e6e11b6750cec2e919130f20a237b7916c86944d0` |
 | `frontend/public/review-materials/architecture.md` | 3146 | `dfe1172763c8a74fce9420049a4e7d90e30ecff49d2322618cc88ad59053b67f` |
 | `frontend/public/review-materials/governance.md` | 1751 | `82725077fe36c88b0af38bd2774ff95d16b05223e738412125b197d796f0ba9b` |
@@ -81,17 +83,17 @@
 | `frontend/src/components/ui/skeleton.tsx` | 275 | `786b780004d605bf28131029874d63a2a591844f02bdcb0bf2ae51c2c09ef4b4` |
 | `frontend/src/components/ui/tabs.tsx` | 955 | `81168ee2a952ff0ca0588ae0521c33af893977c88bf76fbd11e8a3bcfdc8d9ee` |
 | `frontend/src/features/judge/pages/copilot-brief.ts` | 10701 | `5df24a73881fe5e9320b21081ab30377586e1b2692563d249470a96c56221a1d` |
-| `frontend/src/features/judge/pages/copilot-panel.tsx` | 11561 | `c927ac9e9f16f2c0da43e9bd9a05e5240f1075f23ad9e855d6925f3307e81e4e` |
-| `frontend/src/features/judge/pages/decision-evidence.tsx` | 8557 | `8b92b23bdcb3cff3b599a462970e842b464735525305e7a6b878328fdc692876` |
+| `frontend/src/features/judge/pages/copilot-panel.tsx` | 11747 | `6d04d9a7c6e224b3d7cfbd934359e974c520e8c4eab02db4bd493361d689425b` |
+| `frontend/src/features/judge/pages/decision-evidence.tsx` | 9471 | `5d48f6072b90314e96340a6519c80a7f0524cfa18c18f27609f153c7f2cc2643` |
 | `frontend/src/features/judge/pages/demo-data.ts` | 5851 | `74c2f889bd96455cf16021c52bed16c14177dd8e0001f077876197582e96e291` |
 | `frontend/src/features/judge/pages/product-shell.tsx` | 3760 | `b7fa4b0c6fb15fc6759fb3b8966f9e19f29d4ba47260cf51e06d0700ceac0ff6` |
 | `frontend/src/features/judge/pages/product-state.tsx` | 4320 | `39898841abae4a12e3db1716885873dc61585e33139e7bf3cbffc9bd22475e73` |
 | `frontend/src/features/judge/pages/product-view.ts` | 20876 | `30f82859ee2d666f0f29a5729fe5e737a61c89403edd5bc0586941355747afa2` |
 | `frontend/src/features/judge/pages/review-evidence.tsx` | 10495 | `ace260634325ddeeb9306b486efcb94a2a7f821f04d562805d9a7175bbad61f7` |
-| `frontend/src/features/judge/pages/runtime-page.tsx` | 30628 | `89e0f760eb87ccddd9f3c1ec6cf6806ae062545b9f153b1eccc44598c0a563c8` |
+| `frontend/src/features/judge/pages/runtime-page.tsx` | 32116 | `e873b6cdad1fc58ab200952b896126a55713db553086f274f5de6de6a454cec4` |
 | `frontend/src/features/judge/pages/spatial-scene.tsx` | 15861 | `dcfca590919fd19ec948be7a0d02af64a6c5c5d052665772b6e8bbe36e87d3f9` |
-| `frontend/src/features/judge/pages/validation-page.tsx` | 10695 | `ab99f4315b9d3643c08ce5121d05f1384de8853bcb7dc0cc9906a4c6ea6c3fe3` |
-| `frontend/src/features/judge/pages/workbench-page.tsx` | 17388 | `e28bd4e31ea519166f54f1256a93a4f437271445fecbb14acb798c6544a7670c` |
+| `frontend/src/features/judge/pages/validation-page.tsx` | 11979 | `94b8378bd262d2a3bc4b4b048f64bc912afceccff2893e2e1832f0dbc5529d13` |
+| `frontend/src/features/judge/pages/workbench-page.tsx` | 18931 | `3e4377453d4d4cc081ef7f4e2f696a564778d95179b957681ec33b9683471a95` |
 | `frontend/src/features/judge/types.ts` | 5405 | `ebdd35523b86a93aaf3e28014a6bfa5a22f83be54cca8ca536f088577662f68f` |
 | `frontend/src/hooks/query-keys.ts` | 138 | `116f7416546eb536e33636b05fae03ebba69b3765a8e369d98dcea559df29ac6` |
 | `frontend/src/hooks/use-judge.ts` | 1156 | `26d09883365478839ec2b3448a9c31cc8ed7c714aee1199b340e92afa46308c4` |
@@ -99,15 +101,15 @@
 | `frontend/src/lib/presentation.ts` | 2915 | `6edaf1514feac64b8305318cc1b481fe40abb0cec357e23a927497dd87a334d5` |
 | `frontend/src/lib/utils.ts` | 175 | `c0adf27efbfa148d5abcf99e860f8e3e6c8fc77a1f99e023c08ef4f12e6ece29` |
 | `frontend/src/public-main.tsx` | 1142 | `37bef772fa1ec7bfc754783df2175681f21e29d4ca19cc278b591893760744a2` |
-| `frontend/src/styles/globals.css` | 21867 | `5538a54071ad645ca7e9df738d315fa6a341191b0e94bfaeeab12ca3d49f764a` |
+| `frontend/src/styles/globals.css` | 32386 | `96171d68fe13583d9d96b798eab1340ec2ee8197e77b37da5ce10dcece761184` |
 | `frontend/vite.config.ts` | 522 | `d6675e85deb62723659e1f4fa5639eb0892b097fa15757d93a14a0bc65282f99` |
 | `JUDGE_QUICK_START.md` | 7909 | `1eb645c7f2bcb664969d0ae2062db754dc9a29ad7c748a32b63a98c13653bc34` |
 | `LICENSE` | 11358 | `cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30` |
 | `OPEN_SOURCE_GOVERNANCE.md` | 1751 | `82725077fe36c88b0af38bd2774ff95d16b05223e738412125b197d796f0ba9b` |
 | `package-lock.json` | 175742 | `51686f8ccced6f9b86df7e7f92fdf16759016eefbfbbc74e665b7000f4db8efa` |
 | `package.json` | 1824 | `3c7db7f5118d0549cbdd5f6c387640d1109de26a99dd8c752682a2b3b8b53837` |
-| `PUBLIC_RELEASE_AUDIT.md` | 5175 | `4fb30ccf3dd50e1d6cc06d54db12b2fd52741bf3a1775ad28902b03f2d4d21be` |
-| `README.md` | 10483 | `768d4de6c1ac1cf6dab4efe815449e95eacf884426326f021627af5363f3f27d` |
+| `PUBLIC_RELEASE_AUDIT.md` | 5517 | `2d0c2575865af6f798afe2c5507dc993070a93ea2a61ca88a23232bd82aa8987` |
+| `README.md` | 10678 | `4e2f47065de7fc4412367ddbcc988e0acc80b36e389835d1afc32a78ee225633` |
 | `ROADMAP.md` | 1472 | `79a6363cf9aa6695843faa48061e7172e99b3a8babc260c48147768f8ddafd7b` |
 | `scripts/demo-delivery.mjs` | 12075 | `d0de199b9d6affc050fc9920aa71e5f2bf3d37aaac2d02e5192d2d3ff5f415c8` |
 | `scripts/public-release-audit.mjs` | 4924 | `168a7db01011ebaab40a4b27b3d9d269d50bad2f2b70d7902ae3ed2dd1391ff0` |
@@ -259,9 +261,10 @@
 | `src/traceability/trace.ts` | 15645 | `32fbb6631f5d6c125d99992f3d5cc741c47664444b952578210d4a4db56ce5eb` |
 | `src/traceability/types.ts` | 5587 | `26eaeb07e34a0b2d03701d8d912bd315c6969642d9efc3070912bb182249fd09` |
 | `src/types.ts` | 5730 | `6a4b595253fedc335bd40635761fb372d25898b4074783e0347a37f58e5623a7` |
-| `submission/solution-pack.md` | 575 | `9c00b43d2a4c4dbe46682115079e3f16be49d858b7a32e3c14b758dcfdba4407` |
 | `SUBMISSION_READINESS.md` | 1639 | `181fc6ca84aea1c102c674fc493d24aea4f68b0d36cd731ec59c60bee19e05a1` |
+| `submission/solution-pack.md` | 575 | `9c00b43d2a4c4dbe46682115079e3f16be49d858b7a32e3c14b758dcfdba4407` |
 | `tests/copilot-ai.test.ts` | 18395 | `a480c1afe16b546554dbdd02d236440122577e46aa00d3255cfe9fd09db02981` |
+| `THIRD_PARTY_NOTICES.md` | 5999 | `b44b302dbe4d6036ede0da5dba9805242a4b69ce4b2b0308005087ef765a3dcb` |
 | `third_party/licenses/@babel__code-frame@7.29.7/LICENSE` | 1106 | `117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76` |
 | `third_party/licenses/@babel__compat-data@7.29.7/LICENSE` | 1106 | `117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76` |
 | `third_party/licenses/@babel__core@7.29.7/LICENSE` | 1106 | `117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76` |
@@ -487,6 +490,5 @@
 | `third_party/licenses/ws@8.22.0/LICENSE` | 1183 | `2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef` |
 | `third_party/licenses/yallist@3.1.1/LICENSE` | 765 | `4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b` |
 | `third_party/shadcn-ui-LICENSE.md` | 1063 | `1564074e13439397221ffd522e2e504d56561994a23d371aa5e3ad43e4f5423f` |
-| `THIRD_PARTY_NOTICES.md` | 5999 | `b44b302dbe4d6036ede0da5dba9805242a4b69ce4b2b0308005087ef765a3dcb` |
 | `tsconfig.frontend.public.json` | 480 | `e4f156cd7daea7942ce237154e5e11815c62699b76827330132943552efe6caa` |
 | `tsconfig.public.json` | 447 | `c66143f1919137a080e8d5383136c9269f36163372cd522e8fd70ee18cc360b1` |
